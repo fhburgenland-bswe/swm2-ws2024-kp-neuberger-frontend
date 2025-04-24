@@ -34,3 +34,16 @@ form > div {
 form button {
   margin-right: 0.5rem;
 }
+
+.add-book {
+  margin-bottom: 1.5rem;
+}
+.add-book form {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.add-book input {
+  flex: 1;
+  padding: 0.5rem;
+}

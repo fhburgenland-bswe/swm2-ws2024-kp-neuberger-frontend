@@ -44,6 +44,24 @@
     <div *ngIf="errorMsg" class="error">{{ errorMsg }}</div>
   </form>
 
+  <section class="add-book">
+    <h3>Buch hinzufügen</h3>
+    <form [formGroup]="isbnForm" (ngSubmit)="addBook()">
+      <label>
+        ISBN:
+        <input formControlName="isbn" />
+      </label>
+      <button type="submit" [disabled]="isbnForm.invalid">Hinzufügen</button>
+      <div
+        *ngIf="isbnForm.get('isbn')?.hasError('required') && isbnForm.get('isbn')?.touched"
+        class="error"
+      >
+        ISBN ist erforderlich.
+      </div>
+      <div *ngIf="addError" class="error">{{ addError }}</div>
+    </form>
+  </section>
+
   <ng-container *ngIf="user.books.length; else noBooks">
     <table class="book-table">
       <thead>

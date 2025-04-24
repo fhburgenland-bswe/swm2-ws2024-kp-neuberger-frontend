@@ -1,17 +1,20 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { ActivatedRoute } from '@angular/router';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
+import {ActivatedRoute, convertToParamMap} from '@angular/router';
 import { of, throwError } from 'rxjs';
 
 import { UserDetailComponent } from './user-detail.component';
 import { UserService } from '../../services/user.service';
 import { User } from '../../models/user.model';
 import {FormBuilder, ReactiveFormsModule} from '@angular/forms';
+import {Book} from '../../models/book.model';
+import {BookService} from '../../services/book.srvice';
 
 describe('UserDetailComponent', () => {
   let fixture: ComponentFixture<UserDetailComponent>;
   let comp: UserDetailComponent;
   let userService: jasmine.SpyObj<UserService>;
+  let bookServiceSpy: jasmine.SpyObj<BookService>;
 
   const mockUser: User = {
     id: 'abc',
@@ -31,12 +34,24 @@ describe('UserDetailComponent', () => {
       }
     ]
   };
+  const mockBook: Book = {
+    id: 'b1',
+    isbn: '123',
+    title: 'Test Book',
+    authors: [],
+    publisher: '',
+    publishedDate: '',
+    description: '',
+    coverUrl: '',
+    rating: null,
+    reviews: []
+  };
 
   beforeEach(async () => {
     const userServiceSpy = jasmine.createSpyObj<UserService>('UserService', ['getUserById', 'updateUser']);
     userServiceSpy.getUserById.and.returnValue(of(mockUser));
     userServiceSpy.updateUser.and.returnValue(of({ ...mockUser, name: 'Updated', email: 'updated@example.com' }));
-
+    bookServiceSpy = jasmine.createSpyObj<BookService>('BookService', ['addBookByIsbn']);
     await TestBed.configureTestingModule({
       imports: [
         UserDetailComponent,
@@ -45,15 +60,20 @@ describe('UserDetailComponent', () => {
       ],
       providers: [
         { provide: UserService, useValue: userServiceSpy },
-        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => 'abc' } } } },
-        FormBuilder
+        { provide: BookService, useValue: bookServiceSpy },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            paramMap: of(convertToParamMap({ userId: 'abc' }))
+          }
+        },
+        FormBuilder,
       ]
     }).compileComponents();
-
     fixture = TestBed.createComponent(UserDetailComponent);
     userService = TestBed.inject(UserService) as jasmine.SpyObj<UserService>;
     comp = fixture.componentInstance;
-    fixture.detectChanges(); // trigger ngOnInit and initForm
+    fixture.detectChanges();
   });
 
   it('loading user and books', fakeAsync(() => {
@@ -75,10 +95,8 @@ describe('UserDetailComponent', () => {
     comp.toggleEdit();
     comp.profileForm.controls['name'].setValue('Updated');
     comp.profileForm.controls['email'].setValue('updated@example.com');
-
     comp.saveProfile();
     tick();
-
     expect(userService.updateUser).toHaveBeenCalledWith('abc', {
       name: 'Updated',
       email: 'updated@example.com'
@@ -92,10 +110,8 @@ describe('UserDetailComponent', () => {
     comp.toggleEdit();
     comp.profileForm.controls['name'].setValue('Name');
     comp.profileForm.controls['email'].setValue('conflict@example.com');
-
     comp.saveProfile();
     tick();
-
     expect(comp.profileForm.controls['email'].hasError('conflict')).toBeTrue();
     expect(comp.successMsg).toBeNull();
   }));
@@ -105,11 +121,42 @@ describe('UserDetailComponent', () => {
     comp.toggleEdit();
     comp.profileForm.controls['name'].setValue('Name');
     comp.profileForm.controls['email'].setValue('user@example.com');
-
     comp.saveProfile();
     tick();
-
     expect(comp.errorMsg).toBe('Profil konnte nicht aktualisiert werden.');
     expect(comp.successMsg).toBeNull();
+  }));
+
+  it('should add a book on valid ISBN', fakeAsync(() => {
+    bookServiceSpy.addBookByIsbn.and.returnValue(of(mockBook));
+    fixture.detectChanges();
+    tick();
+    comp.isbnForm.setValue({ isbn: '1' });
+    comp.addBook();
+    tick();
+    expect(bookServiceSpy.addBookByIsbn).toHaveBeenCalledWith('abc', '1');
+    expect(comp.user!.books).toContain(mockBook);
+    expect(comp.addError).toBeNull();
+    expect(comp.isbnForm.value.isbn).toBeNull();
+  }));
+
+  it('should show error message on book add failure (500)', fakeAsync(() => {
+    bookServiceSpy.addBookByIsbn.and.returnValue(throwError(() => ({ status: 500 })));
+    fixture.detectChanges();
+    tick();
+    comp.isbnForm.setValue({ isbn: '999' });
+    comp.addBook();
+    tick();
+    expect(bookServiceSpy.addBookByIsbn).toHaveBeenCalled();
+    expect(comp.addError).toBe('Fehler beim Abrufen der Buchdaten');
+  }));
+
+  it('should show validation error on empty ISBN', fakeAsync(() => {
+    fixture.detectChanges();
+    tick();
+    comp.isbnForm.setValue({ isbn: '' });
+    comp.addBook();
+    expect(bookServiceSpy.addBookByIsbn).not.toHaveBeenCalled();
+    expect(comp.addError).toBeNull();
   }));
 });
