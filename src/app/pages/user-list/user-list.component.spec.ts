@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { UserListComponent } from './user-list.component';
+import { User } from '../../models/user.model';
 
 describe('UserListComponent', () => {
   let fixture: ComponentFixture<UserListComponent>;
@@ -23,7 +24,9 @@ describe('UserListComponent', () => {
   });
 
   it('loads users on init', fakeAsync(() => {
-    const mockUsers = [{ id: '1', name: 'A', email: 'a@b' }];
+    const mockUsers: User[] = [
+      { id: '1', name: 'A', email: 'a@b', books: [] }
+    ];
     component.ngOnInit();
     const req = httpMock.expectOne('http://localhost:8080/users');
     req.flush(mockUsers);
@@ -43,7 +46,7 @@ describe('UserListComponent', () => {
 
   it('deletes user when confirmed', fakeAsync(() => {
     spyOn(window, 'confirm').and.returnValue(true);
-    component.users = [{ id: '1', name: 'A', email: 'a@b' }];
+    component.users = [{ id: '1', name: 'A', email: 'a@b', books: [] }];
     component.delete(component.users[0]);
     const req = httpMock.expectOne('http://localhost:8080/users/1');
     req.flush({});
@@ -53,7 +56,7 @@ describe('UserListComponent', () => {
 
   it('cancels delete when not confirmed', () => {
     spyOn(window, 'confirm').and.returnValue(false);
-    component.users = [{ id: '1', name: 'A', email: 'a@b' }];
+    component.users = [{ id: '1', name: 'A', email: 'a@b', books: [] }];
     component.delete(component.users[0]);
     httpMock.expectNone('http://localhost:8080/users/1');
     expect(component.users.length).toBe(1);

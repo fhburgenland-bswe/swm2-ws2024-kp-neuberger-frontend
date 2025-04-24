@@ -6,6 +6,7 @@ import { UserService } from '../../services/user.service';
 import { of, throwError } from 'rxjs';
 import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { User } from '../../models/user.model';
 
 describe('UserCreateComponent', () => {
   let component: UserCreateComponent;
@@ -45,8 +46,9 @@ describe('UserCreateComponent', () => {
 
   it('submits and navigates on success', fakeAsync(() => {
     const userData = { name: 'Max Mustermann', email: 'max@example.com' };
+    const mockUser: User = { id: '1', ...userData, books: [] };
     component.form.setValue(userData);
-    userService.createUser.and.returnValue(of({ id: '1', ...userData }));
+    userService.createUser.and.returnValue(of(mockUser));
 
     spyOn(window, 'alert');
     component.onSubmit();
