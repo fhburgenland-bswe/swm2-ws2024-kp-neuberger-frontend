@@ -21,6 +21,7 @@
     <td>{{ u.name }}</td>
     <td>{{ u.email }}</td>
     <td>
+      <button [routerLink]="['/users', u.id]">Details</button>
       <button (click)="delete(u)">Löschen</button>
     </td>
   </tr>

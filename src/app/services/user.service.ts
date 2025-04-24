@@ -54,6 +54,17 @@ export class UserService {
   }
 
   /**
+   * Ruft die Details eines einzelnen Benutzers ab.
+   * @param userId ID des gewünschten Benutzers
+   * @returns Ein Observable mit dem kompletten User-Objekt
+   */
+  getUserById(userId: string): Observable<User> {
+    return this.http
+      .get<User>(`${this.backendUrl}/users/${userId}`)
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
    * Löscht einen Benutzer anhand seiner ID.
    * @param userId Die eindeutige ID des zu löschenden Benutzers
    * @returns Ein Observable, das bei erfolgreichem Löschen `void` emittiert

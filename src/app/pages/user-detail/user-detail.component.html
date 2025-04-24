@@ -1,0 +1,37 @@
+<div class="toolbar">
+  <button routerLink="/">Home</button>
+</div>
+
+<h1>Benutzer-Details</h1>
+
+<div *ngIf="loading">Lade Daten …</div>
+<div *ngIf="errorMsg" class="error">{{ errorMsg }}</div>
+
+<div *ngIf="!loading && user">
+  <section class="info">
+    <h2>{{ user.name }}</h2>
+    <p>{{ user.email }}</p>
+  </section>
+
+  <ng-container *ngIf="user.books.length; else noBooks">
+    <table class="book-table">
+      <thead>
+      <tr>
+        <th>ISBN</th>
+        <th>Titel</th>
+        <th>Bewertung</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let b of user.books">
+        <td>{{ b.isbn }}</td>
+        <td>{{ b.title }}</td>
+        <td>{{ b.rating ?? '-' }}</td>
+      </tr>
+      </tbody>
+    </table>
+  </ng-container>
+  <ng-template #noBooks>
+    <p>Keine Bücher vorhanden.</p>
+  </ng-template>
+</div>
