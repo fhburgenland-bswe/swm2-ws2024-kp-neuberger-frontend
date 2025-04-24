@@ -4,7 +4,7 @@
 .info {
   border: 1px solid #ccc;
   padding: 1rem;
-  margin-bottom: 1rem;
+  margin-bottom: 2rem;
   border-radius: 4px;
 }
 .book-table {
@@ -21,4 +21,16 @@
   color: red;
   font-weight: bold;
   margin-top: 1rem;
+}
+
+form {
+  margin-bottom: 2rem;
+}
+
+form > div {
+  margin-bottom: 1rem;
+}
+
+form button {
+  margin-right: 0.5rem;
 }

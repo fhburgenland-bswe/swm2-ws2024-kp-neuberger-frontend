@@ -65,6 +65,18 @@ export class UserService {
   }
 
   /**
+   * Aktualisiert Name und E-Mail eines Benutzers.
+   * @param userId ID des Benutzers
+   * @param payload Objekt mit neuen Feldern name und email
+   * @returns Das aktualisierte User-Objekt
+   */
+  updateUser(userId: string, payload: { name: string; email: string }) {
+    return this.http
+      .put<User>(`${this.backendUrl}/users/${userId}`, payload)
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
    * Löscht einen Benutzer anhand seiner ID.
    * @param userId Die eindeutige ID des zu löschenden Benutzers
    * @returns Ein Observable, das bei erfolgreichem Löschen `void` emittiert

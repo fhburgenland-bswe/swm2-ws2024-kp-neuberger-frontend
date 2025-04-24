@@ -11,7 +11,38 @@
   <section class="info">
     <h2>{{ user.name }}</h2>
     <p>{{ user.email }}</p>
+    <button *ngIf="!editing" (click)="toggleEdit()">Profil bearbeiten</button>
   </section>
+
+  <form *ngIf="editing" [formGroup]="profileForm" (ngSubmit)="saveProfile()">
+    <div>
+      <label>
+        Name:
+        <input formControlName="name" />
+      </label>
+      <div *ngIf="profileForm.get('name')?.touched && profileForm.get('name')?.invalid">
+        <small *ngIf="profileForm.get('name')?.hasError('required')">Name ist erforderlich.</small>
+        <small *ngIf="profileForm.get('name')?.hasError('minlength')">Mindestens 2 Zeichen.</small>
+      </div>
+    </div>
+
+    <div>
+      <label>
+        E-Mail:
+        <input formControlName="email" />
+      </label>
+      <div *ngIf="profileForm.get('email')?.touched && profileForm.get('email')?.invalid">
+        <small *ngIf="profileForm.get('email')?.hasError('required')">E-Mail ist erforderlich.</small>
+        <small *ngIf="profileForm.get('email')?.hasError('email')">Ungültiges Format.</small>
+        <small *ngIf="profileForm.get('email')?.hasError('conflict')">E-Mail bereits vergeben.</small>
+      </div>
+    </div>
+
+    <button type="submit" [disabled]="profileForm.invalid">Speichern</button>
+    <button type="button" (click)="toggleEdit()">Abbrechen</button>
+    <div *ngIf="successMsg" class="success">{{ successMsg }}</div>
+    <div *ngIf="errorMsg" class="error">{{ errorMsg }}</div>
+  </form>
 
   <ng-container *ngIf="user.books.length; else noBooks">
     <table class="book-table">

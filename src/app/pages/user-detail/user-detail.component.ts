@@ -6,6 +6,7 @@ import { catchError, of }            from 'rxjs';
 
 import { UserService } from '../../services/user.service';
 import { User }        from '../../models/user.model';
+import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 /**
  * Komponente zur Anzeige von Benutzerdetails.
  */
@@ -17,7 +18,8 @@ import { User }        from '../../models/user.model';
     HttpClientModule,
     RouterModule,
     NgIf,
-    NgFor
+    NgFor,
+    ReactiveFormsModule
   ],
   templateUrl: './user-detail.component.html',
   styleUrls: [ './user-detail.component.css' ]
@@ -26,14 +28,19 @@ export class UserDetailComponent implements OnInit {
   user: User | null = null;
   loading = true;
   errorMsg: string | null = null;
+  editing = false;
+  profileForm!: FormGroup;
+  successMsg: string | null = null;
 
   /**
    * @param userService Service zum Abrufen der Benutzerdaten vom Backend
    * @param route ActivatedRoute, um Pfadparameter auszulesen
+   * @param fb FormBuilder zum Erstellen des Formulars
    */
   constructor(
     private readonly userService: UserService,
-    private readonly route: ActivatedRoute
+    private readonly route: ActivatedRoute,
+    private readonly fb: FormBuilder
   ) {}
 
   /**
@@ -54,6 +61,56 @@ export class UserDetailComponent implements OnInit {
       .subscribe(u => {
         this.user    = u;
         this.loading = false;
+      });
+  }
+
+  /**
+   * Initialisiert das Profilformular mit den aktuellen Benutzerdaten.
+   */
+  private initForm(user: User): void {
+    this.profileForm = this.fb.group({
+      name:  [user.name, [Validators.required, Validators.minLength(2)]],
+      email: [user.email, [Validators.required, Validators.email]]
+    });
+  }
+
+  /**
+   * Schaltet den Bearbeitungsmodus um (anzeigen/verstecken des Formulars).
+   */
+  toggleEdit(): void {
+    this.editing  = !this.editing;
+    this.errorMsg = null;
+    this.successMsg = null;
+    if (this.editing && this.user) this.initForm(this.user);
+  }
+
+  /**
+   * Speichert die geänderten Profildaten via PUT-Request.
+   */
+  saveProfile(): void {
+    if (!this.user || this.profileForm.invalid) return;
+    const id = this.user.id!;
+    this.errorMsg   = null;
+    this.successMsg = null;
+    const { name, email } = this.profileForm.value;
+
+    this.userService.updateUser(id, { name, email })
+      .pipe(
+        catchError(err => {
+          if (err.status === 409) {
+            this.profileForm.get('email')?.setErrors({ conflict: true });
+          } else {
+            this.errorMsg = 'Profil konnte nicht aktualisiert werden.';
+          }
+          return of(null);
+        })
+      )
+      .subscribe(updated => {
+        if (updated) {
+          this.user       = updated;
+          this.successMsg = 'Profil aktualisiert';
+          this.editing    = false;
+        }
       });
   }
 }
