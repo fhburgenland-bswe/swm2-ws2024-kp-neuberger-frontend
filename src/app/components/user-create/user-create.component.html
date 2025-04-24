@@ -1,0 +1,35 @@
+<h1>Neuen Benutzer anlegen</h1>
+
+<form [formGroup]="form" (ngSubmit)="onSubmit()">
+  <label>
+    Name:
+    <input formControlName="name" />
+  </label>
+  <div *ngIf="form.get('name')?.touched && form.get('name')?.invalid">
+    <small *ngIf="form.get('name')?.hasError('required')">
+      Name ist erforderlich.
+    </small>
+  </div>
+
+  <label>
+    E-Mail:
+    <input formControlName="email" />
+  </label>
+  <div *ngIf="form.get('email')?.touched && form.get('email')?.invalid">
+    <small *ngIf="form.get('email')?.hasError('required')">
+      E-Mail ist erforderlich.
+    </small>
+    <small *ngIf="form.get('email')?.hasError('email')">
+      Ungültiges E-Mail-Format.
+    </small>
+    <small *ngIf="form.get('email')?.hasError('conflict')">
+      E-Mail bereits vergeben.
+    </small>
+  </div>
+
+  <button type="submit" [disabled]="form.invalid">Anlegen</button>
+
+  <div *ngIf="apiError" class="error">
+    {{ apiError }}
+  </div>
+</form>

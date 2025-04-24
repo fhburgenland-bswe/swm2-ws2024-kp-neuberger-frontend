@@ -9,7 +9,9 @@
     "test": "ng test",
     "lint": "ng lint",
     "lint:fix": "eslint --fix",
-    "e2e": "ng e2e",
+    "e2e": "npx playwright test",
+    "e2e:headed": "npx playwright test --headed",
+    "e2e:playwright": "npx playwright install --with-deps",
     "serve:ssr:bookmanager-frontend": "node dist/bookmanager-frontend/server/server.mjs"
   },
   "private": true,
@@ -44,6 +46,7 @@
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
     "typescript": "~5.7.2",
-    "typescript-eslint": "8.27.0"
+    "typescript-eslint": "8.27.0",
+    "@playwright/test": "^1.51.0"
   }
 }
