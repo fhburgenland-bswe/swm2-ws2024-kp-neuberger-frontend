@@ -43,6 +43,29 @@ export class UserService {
   }
 
   /**
+   * Ruft alle registrierten Benutzer vom Server ab.
+   * @returns Ein Observable-Array aller User-Objekte
+   * @throws HttpErrorResponse im Fehlerfall (z. B. 500er)
+   */
+  getAllUsers(): Observable<User[]> {
+    return this.http
+      .get<User[]>(`${this.backendUrl}/users`)
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * Löscht einen Benutzer anhand seiner ID.
+   * @param userId Die eindeutige ID des zu löschenden Benutzers
+   * @returns Ein Observable, das bei erfolgreichem Löschen `void` emittiert
+   * @throws HttpErrorResponse im Fehlerfall (z. B. 404 oder 500)
+   */
+  deleteUser(userId: string): Observable<void> {
+    return this.http
+      .delete<void>(`${this.backendUrl}/users/${userId}`)
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
    * Interne Methode zum Abfangen und Weiterleiten von HTTP-Fehlern.
    *
    * @param err Das HttpErrorResponse-Objekt mit Details zum Fehler

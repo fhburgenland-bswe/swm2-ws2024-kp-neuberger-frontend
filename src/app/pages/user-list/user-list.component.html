@@ -1,0 +1,28 @@
+<!-- src/app/pages/user-list/user-list.component.html -->
+<div class="toolbar">
+  <button routerLink="/">Home</button>
+</div>
+
+<h1>Alle Benutzer</h1>
+
+<div *ngIf="loading">Lade Daten …</div>
+<div *ngIf="errorMsg" class="error">{{ errorMsg }}</div>
+
+<table *ngIf="!loading && !errorMsg" class="user-table">
+  <thead>
+  <tr>
+    <th>Name</th>
+    <th>E-Mail</th>
+    <th>Aktionen</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr *ngFor="let u of users">
+    <td>{{ u.name }}</td>
+    <td>{{ u.email }}</td>
+    <td>
+      <button (click)="delete(u)">Löschen</button>
+    </td>
+  </tr>
+  </tbody>
+</table>
