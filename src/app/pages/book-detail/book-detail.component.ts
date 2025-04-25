@@ -37,6 +37,9 @@ export class BookDetailComponent implements OnInit {
   editingReviewId: string | null = null;
   editReviewForm!: FormGroup;
   editError: string | null = null;
+  editingDetails = false;
+  detailsForm!: FormGroup;
+  editingRating = false;
 
   /**
    * Konstruktor: Initialisiert benötigte Services
@@ -71,10 +74,21 @@ export class BookDetailComponent implements OnInit {
         if (b) {
           this.initRatingForm(b.rating);
           this.initReviewForm();
+          this.initDetailsForm();
         }
       });
   }
 
+  /**
+   * Initialisiert das Formular zur Bewertung eines Buches.
+   *
+   * Setzt den Bewertungswert auf den übergebenen Wert `rating`, oder auf 1,
+   * falls `rating` null oder undefined ist.
+   * Die Bewertung muss zwischen 1 und 5 liegen.
+   * Nach der Initialisierung wird das Formular deaktiviert
+   *
+   * @param rating Die vorgegebene Bewertung (1–5) oder null/undefined
+   */
   private initRatingForm(rating: number | null | undefined): void {
     this.ratingForm = this.fb.group({
       rating: [
@@ -82,8 +96,18 @@ export class BookDetailComponent implements OnInit {
         [Validators.required, Validators.min(1), Validators.max(5)]
       ]
     });
+    this.ratingForm.disable();
   }
 
+  /**
+   * Initialisiert das Formular für das Schreiben einer Rezension.
+   *
+   * Das Formular enthält zwei Felder:
+   * - `rating`: Eine verpflichtende Bewertung zwischen 1 und 5 Sternen.
+   * - `reviewText`: Ein Pflichttextfeld für den eigentlichen Rezensionstext.
+   *
+   * Dieses Formular dient dazu, neue Rezensionen zum Buch zu erfassen.
+   */
   private initReviewForm(): void {
     this.reviewForm = this.fb.group({
       rating: [null, [Validators.required, Validators.min(1), Validators.max(5)]],
@@ -214,6 +238,89 @@ export class BookDetailComponent implements OnInit {
         .subscribe(() => {
           this.book!.reviews = this.book!.reviews.filter(r => r.id !== reviewId);
         });
+  }
+
+  /**
+   * Aktiviert den Bearbeitungsmodus für entweder Buchinformationen oder Bewertung.
+   *
+   * - Aktiviert das entsprechende Formular (Details oder Bewertung)
+   * - Deaktiviert das jeweils andere Formular
+   *
+   * @param mode 'details' aktiviert die Buchinformationsbearbeitung, 'rating' die Bewertungsbearbeitung
+   */
+  enableEdit(mode: 'details' | 'rating'): void {
+    this.editingDetails = mode === 'details';
+    this.editingRating  = mode === 'rating';
+
+    if (this.detailsForm) {
+      this.detailsForm[mode === 'details' ? 'enable' : 'disable']();
+    }
+
+    if (this.ratingForm) {
+      this.ratingForm[mode === 'rating' ? 'enable' : 'disable']();
+    }
+  }
+
+  /**
+   * Initialisiert das Formular zur Bearbeitung der Buchinformationen.
+   *
+   * Die Felder werden mit den aktuellen Buchwerten vorausgefüllt.
+   * Das Formular ist initial deaktiviert und wird erst durch den Bearbeitungsmodus aktiviert.
+   */
+  private initDetailsForm(): void {
+    if (!this.book) return;
+    this.detailsForm = this.fb.group({
+      title:       [this.book.title],
+      authors:     [this.book.authors.join(', ')],
+      description: [this.book.description],
+      coverUrl:    [this.book.coverUrl],
+    });
+    this.detailsForm.disable();
+  }
+
+  /**
+   * Speichert geänderte Buchinformationen über eine PUT-Anfrage.
+   *
+   * Nur wenn ein Buch geladen ist und das Formular gültig ist, wird eine Aktualisierung durchgeführt.
+   * Nach erfolgreicher Speicherung wird das Formular deaktiviert und eine Erfolgsmeldung angezeigt.
+   */
+  saveBookDetails(): void {
+    if (!this.book || this.detailsForm.invalid) return;
+    const userId = this.route.snapshot.paramMap.get('userId')!;
+    const isbn   = this.route.snapshot.paramMap.get('isbn')!;
+    const { title, authors, description, coverUrl } = this.detailsForm.value;
+    const payload = {
+      title,
+      authors: authors.split(',').map((a: string) => a.trim()),
+      description,
+      coverUrl
+    };
+    this.bs.updateBookDetails(userId, isbn, payload)
+        .pipe(catchError(() => {
+          this.errorMsg = 'Fehler beim Speichern der Buchinformationen';
+          return of(null);
+        }))
+        .subscribe(updated => {
+          if (updated) {
+            this.book = updated;
+            this.editingDetails = false;
+            this.detailsForm.disable();
+            this.successMsg = 'Buchdetails erfolgreich gespeichert';
+          }
+        });
+  }
+
+  /**
+   * Bricht den Bearbeitungsmodus ab.
+   *
+   * Deaktiviert sowohl das Buchinformations- als auch das Bewertungsformular
+   * und setzt die entsprechenden Bearbeitungszustände zurück.
+   */
+  cancelEdit(): void {
+    this.editingDetails = false;
+    this.editingRating = false;
+    this.detailsForm?.disable();
+    this.ratingForm?.disable();
   }
 
   /**

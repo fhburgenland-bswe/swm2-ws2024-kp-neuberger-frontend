@@ -1,59 +1,93 @@
 # BookmanagerFrontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.2.9.
+Dies ist das Frontend einer Angular-Anwendung zur Verwaltung von Benutzern, Büchern und Buchrezensionen. Die Anwendung erlaubt es dir, Benutzer anzulegen, Bücher zu deren Sammlung hinzuzufügen, Informationen zu Büchern zu bearbeiten sowie Bewertungen und Rezensionen zu verfassen.
 
-## Development server
+## Funktionen im Überblick
 
-To start a local development server, run:
+### Startseite (`/`)
+- Einstiegspunkt der Anwendung mit Begrüßung.
+- Zwei Buttons führen zu:
+  - Benutzer anlegen
+  - Benutzerübersicht anzeigen
 
+### Benutzerverwaltung
+
+#### Benutzer anlegen (`/users/create`)
+- Formular zur Eingabe von Name und E-Mail.
+- Validierung (Pflichtfelder, E-Mail-Format, Konfliktprüfung).
+
+#### Benutzerliste anzeigen (`/users`)
+- Alle registrierten Benutzer im Überblick.
+- Möglichkeit zur Navigation zu einzelnen Benutzerdetails.
+- Benutzer löschen mit Bestätigungsdialog.
+
+#### Benutzerdetails (`/users/:id`)
+- Profilbearbeitung (Name, E-Mail).
+- Bücher per ISBN hinzufügen.
+- Bücher suchen & filtern nach Titel, Autor, Jahr und Bewertung.
+- Rezensionen je Buch anzeigen.
+- Bücher löschen.
+
+### Buchdetails (`/users/:userId/books/:isbn`)
+
+#### Allgemein
+- Anzeigen aller Buchinformationen (Titel, Autor, Beschreibung, etc.).
+- Bewertung anzeigen und bearbeiten (1-5 Sterne).
+
+#### Bearbeiten
+- "Buchinformationen bearbeiten" aktiviert Eingabe für Titel, Autoren, Beschreibung und Cover-URL.
+- "Bewertung bearbeiten" erlaubt Änderung der Sternebewertung.
+- "Abbrechen" schaltet Felder wieder schreibgeschützt.
+
+#### Rezensionen
+- Neue Rezension erstellen (mit Sternebewertung und Text).
+- Vorhandene Rezensionen bearbeiten oder löschen.
+
+## Lokale Entwicklung
+
+### Entwicklung starten
 ```bash
 ng serve
 ```
+Anwendung unter `http://localhost:4200/` aufrufen. Bei Dateiänderungen erfolgt ein automatischer Reload.
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
+### Anwendung bauen
 ```bash
-ng generate component component-name
+ng build
 ```
+Die kompilierte App liegt danach im Verzeichnis `dist/`. Diese ist optimiert für Produktion.
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+### Unit Tests ausführen
+```bash
+ng test
+```
+Tests werden mit Karma ausgeführt. Ergebnis erscheint im Browser.
 
+### End-to-End Tests (optional)
+```bash
+ng e2e
+```
+Hinweis: Angular CLI bringt kein Framework dafür mit. Du kannst z. B. Cypress oder Playwright integrieren.
+
+## Entwickler-Tipps
+
+### Neue Komponenten generieren
+```bash
+ng generate component komponenten-name
+```
+Mehr Infos unter:
 ```bash
 ng generate --help
 ```
 
-## Building
+## Technologien
+- Angular 19
+- Reactive Forms
+- Routing
+- HTTP Client
+- OpenAPI (Backend-Schnittstelle)
 
-To build the project run:
+---
 
-```bash
-ng build
-```
+Viel Spaß beim Verwalten deiner Bücherwelt!
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.

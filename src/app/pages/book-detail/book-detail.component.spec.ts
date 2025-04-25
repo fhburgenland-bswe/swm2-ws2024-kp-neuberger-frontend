@@ -70,26 +70,23 @@ describe('BookDetailComponent', () => {
   it('shows error on invalid rating', fakeAsync(() => {
     httpMock.expectOne('http://localhost:8080/users/u1/books/10').flush(mockBook);
     tick();
+    comp.enableEdit('rating');
     comp.ratingForm.setValue({ rating: 6 });
     comp.saveRating();
-    expect(comp.errorMsg).toBeNull();
     httpMock.expectNone('http://localhost:8080/users/u1/books/10');
+    expect(comp.errorMsg).toBeNull();
   }));
+
   it('submits a new review and adds it to the list', fakeAsync(() => {
     const mockReview = {
       id: 'r1',
       rating: 5,
       reviewText: 'Tolles Buch!'
     };
-
-    // Initial book load
     httpMock.expectOne('http://localhost:8080/users/u1/books/10').flush({ ...mockBook });
     tick();
-
-    // Set review form values
     comp.reviewForm.setValue({ rating: 5, reviewText: 'Tolles Buch!' });
     comp.submitReview();
-
     const post = httpMock.expectOne('http://localhost:8080/users/u1/books/10/reviews');
     expect(post.request.method).toBe('POST');
     expect(post.request.body).toEqual({ rating: 5, reviewText: 'Tolles Buch!' });
@@ -145,5 +142,47 @@ describe('BookDetailComponent', () => {
     comp.deleteReview('r1');
     httpMock.expectNone('http://localhost:8080/users/u1/books/10/reviews/r1');
     expect(comp.book!.reviews.length).toBe(1);
+  }));
+
+  it('should update book details when saveBookDetails is called', fakeAsync(() => {
+    // Buch laden
+    httpMock.expectOne('http://localhost:8080/users/u1/books/10').flush(mockBook);
+    tick();
+
+    // Enable Details-Bearbeitung und Formular vorbereiten
+    comp.enableEdit('details');
+    comp.detailsForm.setValue({
+      title: 'Geändertes Buch',
+      authors: 'Autor A, Autor B',
+      description: 'Neue Beschreibung',
+      coverUrl: 'https://neues-cover.de/bild.jpg'
+    });
+
+    comp.saveBookDetails();
+
+    const req = httpMock.expectOne('http://localhost:8080/users/u1/books/10/details');
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.body).toEqual({
+      title: 'Geändertes Buch',
+      authors: ['Autor A', 'Autor B'],
+      description: 'Neue Beschreibung',
+      coverUrl: 'https://neues-cover.de/bild.jpg'
+    });
+
+    const updatedBook = {
+      ...mockBook,
+      title: 'Geändertes Buch',
+      authors: ['Autor A', 'Autor B'],
+      description: 'Neue Beschreibung',
+      coverUrl: 'https://neues-cover.de/bild.jpg'
+    };
+
+    req.flush(updatedBook);
+    tick();
+
+    expect(comp.book!.title).toBe('Geändertes Buch');
+    expect(comp.book!.authors).toEqual(['Autor A', 'Autor B']);
+    expect(comp.editingDetails).toBeFalse();
+    expect(comp.successMsg).toBe('Buchdetails erfolgreich gespeichert');
   }));
 });

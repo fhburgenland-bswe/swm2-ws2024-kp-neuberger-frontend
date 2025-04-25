@@ -123,6 +123,19 @@ export class BookService {
   }
 
   /**
+   * Aktualisiert Titel, Autoren, Beschreibung oder Cover-URL eines Buchs.
+   */
+  updateBookDetails(
+      userId: string,
+      isbn: string,
+      details: { title: string; authors: string[]; description: string; coverUrl: string }
+  ): Observable<Book> {
+    return this.http
+        .put<Book>(`${this.backendUrl}/users/${userId}/books/${isbn}/details`, details)
+        .pipe(catchError(this.handleError));
+  }
+
+  /**
    * Holt alle Rezensionen zu einem Buch für einen Benutzer.
    *
    * @param userId ID des Benutzers
@@ -174,7 +187,6 @@ export class BookService {
         .delete<void>(`${this.backendUrl}/users/${userId}/books/${isbn}/reviews/${reviewId}`)
         .pipe(catchError(this.handleError));
   }
-
 
   /**
    * Löscht ein Buch aus der Sammlung eines Benutzers.
