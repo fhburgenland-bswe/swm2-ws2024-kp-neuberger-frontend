@@ -8,6 +8,7 @@ import { UserService } from '../../services/user.service';
 import { User }        from '../../models/user.model';
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import { BookService } from '../../services/book.srvice';
+import {Review} from "../../models/book.model";
 
 /**
  * Komponente zur Anzeige von Benutzerdetails.
@@ -36,12 +37,15 @@ export class UserDetailComponent implements OnInit {
   isbnForm!: FormGroup;
   addError: string | null = null;
   deleteSuccess: string | null = null;
+  reviewsMap: Record<string, Review[]> = {};
+  showReviewsFor: string | null = null;
+  reviewsError: string | null = null;
 
 
   /**
    * @param userService Service zum Abrufen der Benutzerdaten vom Backend
    * @param bookService
-   * @param route ActivatedRoute, um Pfadparameter auszulesen
+   * @param route ActifdvatedRoute, um Pfadparameter auszulesen
    * @param fb FormBuilder zum Erstellen des Formulars
    */
   constructor(
@@ -164,8 +168,6 @@ export class UserDetailComponent implements OnInit {
     const isbn = this.isbnForm.value.isbn.trim();
     const userId = this.user.id!;
     this.addError = null;
-
-    // ➕ NEU: Prüfung auf bereits vorhandene ISBN
     const alreadyExists = this.user.books.some(book => book.isbn === isbn);
     if (alreadyExists) {
       this.addError = 'Dieses Buch ist bereits in Ihrer Liste.';
@@ -191,6 +193,20 @@ export class UserDetailComponent implements OnInit {
       });
   }
 
+  /**
+   * Löscht ein Buch basierend auf der angegebenen ISBN aus der Bücherliste des aktuellen Benutzers.
+   *
+   * Zeigt zunächst einen Bestätigungsdialog an, um sicherzustellen, dass der Benutzer
+   * das Buch tatsächlich löschen möchte. Wenn bestätigt, wird die Methode deleteBook
+   * des BookService aufgerufen.
+   *
+   * Bei erfolgreicher Löschung wird das Buch aus der lokalen Bücherliste entfernt,
+   * eine Erfolgsmeldung angezeigt und eventuelle vorherige Fehlermeldungen zurückgesetzt.
+   * Falls die Löschung fehlschlägt, wird eine entsprechende Fehlermeldung angezeigt.
+   *
+   * @param bookIsbn Die ISBN des zu löschenden Buches.
+   * @returns void
+   */
   deleteBook(bookIsbn: string): void {
     if (!this.user) return;
 
@@ -213,5 +229,27 @@ export class UserDetailComponent implements OnInit {
       });
   }
 
-
+  /**
+   * Klappt die Review-Liste für ein Buch auf/zu.
+   * Lädt sie einmalig vom Backend.
+   */
+  toggleReviews(isbn: string): void {
+    if (this.showReviewsFor === isbn) {
+      this.showReviewsFor = null;
+      return;
+    }
+    this.showReviewsFor = isbn;
+    this.reviewsError = null;
+    const userId = this.user!.id!;
+    this.bookService.getReviews(userId, isbn)
+        .pipe(
+            catchError(() => {
+              this.reviewsError = 'Rezensionen konnten nicht geladen werden.';
+              return of([] as Review[]);
+            })
+        )
+        .subscribe(revs => {
+          this.reviewsMap[isbn] = revs;
+        });
+  }
 }
