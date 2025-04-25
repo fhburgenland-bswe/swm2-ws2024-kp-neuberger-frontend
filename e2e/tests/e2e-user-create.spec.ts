@@ -8,11 +8,6 @@ test('E2E: Nutzer anlegen (nur Create)', async ({ page }) => {
     books: []
   };
 
-  await page.addInitScript(`
-    window.__lastAlert = null;
-    window.alert = (msg) => { window.__lastAlert = msg; };
-  `);
-
   await page.route('**/users', async route => {
     if (route.request().method() === 'POST') {
       await route.fulfill({
@@ -28,7 +23,10 @@ test('E2E: Nutzer anlegen (nur Create)', async ({ page }) => {
   await page.goto('http://localhost:4200/users/create');
   await page.fill('input[formControlName="name"]', mockUser.name);
   await page.fill('input[formControlName="email"]', mockUser.email);
-  await page.click('button[type="submit"]');
-  const alertText = await page.evaluate(() => (window as any).__lastAlert);
-  expect(alertText).toBe('Benutzer angelegt');
+  const [dialog] = await Promise.all([
+    page.waitForEvent('dialog'),
+    page.click('button[type="submit"]'),
+  ]);
+  expect(dialog.message()).toBe('Benutzer angelegt');
+  await dialog.accept();
 });

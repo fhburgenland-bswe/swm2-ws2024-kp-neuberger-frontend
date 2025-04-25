@@ -34,6 +34,9 @@ export class BookDetailComponent implements OnInit {
   successMsg: string | null = null;
   public reviewForm!: FormGroup;
   public showReviewForm = false;
+  editingReviewId: string | null = null;
+  editReviewForm!: FormGroup;
+  editError: string | null = null;
 
   /**
    * Konstruktor: Initialisiert benötigte Services
@@ -148,6 +151,50 @@ export class BookDetailComponent implements OnInit {
         }
       });
   }
+
+  /**
+   * Startet den Bearbeitungsmodus für eine Rezension.
+   * @param id         ID der Rezension
+   * @param rating     Aktuelle Bewertung
+   * @param reviewText Aktueller Text
+   */
+  startEditReview(id: string, rating: number, reviewText: string): void {
+    this.editingReviewId = id;
+    this.editError = null;
+    this.editReviewForm = this.fb.group({
+      rating:    [rating,       [Validators.required, Validators.min(1), Validators.max(5)]],
+      reviewText:[reviewText,   Validators.required]
+    });
+  }
+
+  /** Bricht den Bearbeitungsmodus ab */
+  cancelEditReview(): void {
+    this.editingReviewId = null;
+    this.editError = null;
+  }
+
+  /** Speichert die bearbeitete Rezension per PUT */
+  saveEditedReview(): void {
+    if (!this.book || !this.editingReviewId || this.editReviewForm.invalid) return;
+    this.editError = null;
+    const userId   = this.route.snapshot.paramMap.get('userId')!;
+    const isbn     = this.route.snapshot.paramMap.get('isbn')!;
+    const { rating, reviewText } = this.editReviewForm.value;
+
+    this.bs.updateReview(userId, isbn, this.editingReviewId, { rating, reviewText })
+        .pipe(catchError(() => {
+          this.editError = 'Fehler beim Speichern der Rezension';
+          return of(null);
+        }))
+        .subscribe(updated => {
+          if (updated && this.book) {
+            const idx = this.book.reviews.findIndex(r => r.id === this.editingReviewId);
+            if (idx > -1) this.book.reviews[idx] = updated;
+            this.editingReviewId = null;
+          }
+        });
+  }
+
 
   /**
    * Navigiert zurück zur User-Detail-Seite basierend auf dem userId aus der URL.

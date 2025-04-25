@@ -102,4 +102,19 @@ describe('BookDetailComponent', () => {
     expect(comp.successMsg).toBe('Rezension gespeichert');
   }));
 
+  it('should update a review on saveEditedReview', fakeAsync(() => {
+    const originalReview = { id: 'r1', rating: 3, reviewText: 'Alte Meinung' };
+    const reqGet = httpMock.expectOne('http://localhost:8080/users/u1/books/10');
+    reqGet.flush({ ...mockBook, reviews: [ originalReview ] });
+    tick();
+    comp.startEditReview(originalReview.id!, originalReview.rating, originalReview.reviewText);
+    comp.editReviewForm.setValue({ rating: 5, reviewText: 'Neue Meinung' });
+    comp.saveEditedReview();
+    const reqPut = httpMock.expectOne('http://localhost:8080/users/u1/books/10/reviews/r1');
+    expect(reqPut.request.method).toBe('PUT');
+    expect(reqPut.request.body).toEqual({ rating: 5, reviewText: 'Neue Meinung' });
+    reqPut.flush({ id: 'r1', rating: 5, reviewText: 'Neue Meinung' });
+    tick();
+    expect(comp.book!.reviews[0]).toEqual({ id: 'r1', rating: 5, reviewText: 'Neue Meinung' });
+  }));
 });
