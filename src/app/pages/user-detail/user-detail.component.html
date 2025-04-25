@@ -83,12 +83,29 @@
         >
           Buchdetails
         </button>
+          <td>
+              <button (click)="toggleReviews(b.isbn)">
+                  Rezensionen anzeigen
+              </button>
+          </td>
         <td>
           <button (click)="deleteBook(b.isbn)" aria-label="Löschen">🗑️</button>
         </td>
       </tr>
       </tbody>
     </table>
+      <ng-container *ngIf="showReviewsFor">
+          <h4>Rezensionen für ISBN {{ showReviewsFor }}</h4>
+          <div *ngIf="reviewsError" class="error">{{ reviewsError }}</div>
+          <ul *ngIf="reviewsMap[showReviewsFor]?.length; else noReviewsSection">
+              <li *ngFor="let rev of reviewsMap[showReviewsFor]">
+                  ★ {{ rev.rating }} — {{ rev.reviewText }}
+              </li>
+          </ul>
+          <ng-template #noReviewsSection>
+              <p>Keine Rezensionen vorhanden. Bitte auf "Buchdetails" klicken und dort erfassen.</p>
+          </ng-template>
+      </ng-container>
   </ng-container>
   <ng-template #noBooks>
     <p>Keine Bücher vorhanden.</p>

@@ -51,7 +51,7 @@ describe('UserDetailComponent', () => {
     const userServiceSpy = jasmine.createSpyObj<UserService>('UserService', ['getUserById', 'updateUser']);
     userServiceSpy.getUserById.and.returnValue(of(mockUser));
     userServiceSpy.updateUser.and.returnValue(of({ ...mockUser, name: 'Updated', email: 'updated@example.com' }));
-    bookServiceSpy = jasmine.createSpyObj<BookService>('BookService', ['addBookByIsbn', 'deleteBook']);
+    bookServiceSpy = jasmine.createSpyObj<BookService>('BookService', ['addBookByIsbn', 'deleteBook','getReviews']);
     await TestBed.configureTestingModule({
       imports: [
         UserDetailComponent,
@@ -201,4 +201,43 @@ describe('UserDetailComponent', () => {
     expect(bookServiceSpy.deleteBook).toHaveBeenCalled();
     expect(comp.addError).toBe('Löschen fehlgeschlagen');
   }));
+
+  it('should load reviews on first toggle', fakeAsync(() => {
+    const mockReviews = [
+      { id: 'r1', rating: 4, reviewText: 'Great!' },
+      { id: 'r2', rating: 3, reviewText: 'Good' }
+    ];
+    bookServiceSpy.getReviews.and.returnValue(of(mockReviews));
+
+    // initially no reviews loaded
+    expect(comp.reviewsMap['10']).toBeUndefined();
+    expect(comp.showReviewsFor).toBeNull();
+
+    // toggle open
+    comp.toggleReviews('10');
+    tick();
+
+    expect(bookServiceSpy.getReviews).toHaveBeenCalledWith('abc', '10');
+    expect(comp.reviewsMap['10']).toBe(mockReviews);
+    expect(comp.showReviewsFor).toBe('10');
+  }));
+
+  it('should collapse reviews when toggled again', () => {
+    // simulate already open
+    comp.showReviewsFor = '10';
+    comp.toggleReviews('10');
+    expect(comp.showReviewsFor).toBeNull();
+  });
+
+  it('should show error message when reviews fail to load', fakeAsync(() => {
+    bookServiceSpy.getReviews.and.returnValue(throwError(() => ({ status: 500 })));
+
+    comp.toggleReviews('10');
+    tick();
+
+    expect(bookServiceSpy.getReviews).toHaveBeenCalled();
+    expect(comp.reviewsMap['10']).toEqual([]);  // you probably clear to empty on error
+    expect(comp.reviewsError).toBe('Rezensionen konnten nicht geladen werden.');
+  }));
+
 });

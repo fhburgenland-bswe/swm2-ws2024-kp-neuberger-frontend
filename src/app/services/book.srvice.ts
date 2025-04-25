@@ -92,6 +92,19 @@ export class BookService {
   }
 
   /**
+   * Holt alle Rezensionen zu einem Buch für einen Benutzer.
+   *
+   * @param userId ID des Benutzers
+   * @param isbn   ISBN des Buchs
+   * @returns       Ein Observable mit dem Array von Review-Objekten
+   */
+  getReviews(userId: string, isbn: string): Observable<Review[]> {
+    return this.http
+        .get<Review[]>(`${this.backendUrl}/users/${userId}/books/${isbn}/reviews`)
+        .pipe(catchError(this.handleError));
+  }
+
+  /**
    * Aktualisiert eine vorhandene Rezension eines Buchs.
    *
    * @param userId    ID des Benutzers
