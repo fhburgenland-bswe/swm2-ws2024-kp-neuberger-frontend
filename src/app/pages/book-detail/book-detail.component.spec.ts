@@ -117,4 +117,33 @@ describe('BookDetailComponent', () => {
     tick();
     expect(comp.book!.reviews[0]).toEqual({ id: 'r1', rating: 5, reviewText: 'Neue Meinung' });
   }));
+
+  it('should delete a review when confirmed', fakeAsync(() => {
+    const bookWithReview = {
+      ...mockBook,
+      reviews: [{ id: 'r1', rating: 5, reviewText: 'Testrezension' }]
+    };
+    httpMock.expectOne('http://localhost:8080/users/u1/books/10').flush(bookWithReview);
+    tick();
+    spyOn(window, 'confirm').and.returnValue(true);
+    comp.deleteReview('r1');
+    const deleteReq = httpMock.expectOne('http://localhost:8080/users/u1/books/10/reviews/r1');
+    expect(deleteReq.request.method).toBe('DELETE');
+    deleteReq.flush(null, { status: 204, statusText: 'No Content' });
+    tick();
+    expect(comp.book!.reviews.length).toBe(0);
+  }));
+
+  it('should not delete a review when confirmation is dismissed', fakeAsync(() => {
+    const bookWithReview = {
+      ...mockBook,
+      reviews: [{ id: 'r1', rating: 5, reviewText: 'Testrezension' }]
+    };
+    httpMock.expectOne('http://localhost:8080/users/u1/books/10').flush(bookWithReview);
+    tick();
+    spyOn(window, 'confirm').and.returnValue(false);
+    comp.deleteReview('r1');
+    httpMock.expectNone('http://localhost:8080/users/u1/books/10/reviews/r1');
+    expect(comp.book!.reviews.length).toBe(1);
+  }));
 });
