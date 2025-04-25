@@ -19,7 +19,7 @@
   <p><strong>Cover-URL:</strong> <a [href]="book.coverUrl" target="_blank">{{ book.coverUrl }}</a></p>
   <img *ngIf="book.coverUrl" [src]="book.coverUrl" alt="Cover" class="cover" />
 
-  <form [formGroup]="ratingForm" (ngSubmit)="saveRating()">
+  <form [formGroup]="ratingForm" (ngSubmit)="saveRating()" style="margin-bottom: 2rem;">
     <label>
       Bewertung (1–5):
       <input type="number" formControlName="rating" min="1" max="5" />
@@ -31,6 +31,36 @@
     </div>
     <button type="submit" [disabled]="ratingForm.invalid">Speichern</button>
     <div *ngIf="successMsg" class="success">{{ successMsg }}</div>
+  </form>
+
+  <div style="margin: 2rem 0;">
+    <button (click)="showReviewForm = !showReviewForm">{{ 'Rezension erfassen' }}</button>
+  </div>
+
+  <form *ngIf="showReviewForm" [formGroup]="reviewForm" (ngSubmit)="submitReview()" style="margin-bottom: 3rem;">
+    <h3>Rezension erfassen</h3>
+    <label>
+      Bewertung (1–5):
+      <input type="number" formControlName="rating" min="1" max="5" />
+    </label>
+    <br/>
+    <label>
+      Rezensionstext:
+      <textarea formControlName="reviewText"></textarea>
+    </label>
+    <div *ngIf="reviewForm.invalid">
+      <small *ngIf="reviewForm.hasError('required', 'rating') || reviewForm.hasError('min', 'rating') || reviewForm.hasError('max', 'rating')">
+        Bitte eine gültige Bewertung zwischen 1 und 5 angeben.
+      </small>
+      <br />
+      <small *ngIf="reviewForm.hasError('required', 'reviewText')">
+        Bitte gib einen Rezensionstext ein.
+      </small>
+    </div>
+    <div style="margin-top: 1rem; display: flex; gap: 1rem;">
+      <button type="submit" [disabled]="reviewForm.invalid">Absenden</button>
+      <button type="button" (click)="showReviewForm = false">Abbrechen</button>
+    </div>
   </form>
 
   <h3>Rezensionen</h3>

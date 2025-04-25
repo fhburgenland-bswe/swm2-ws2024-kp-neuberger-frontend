@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { Book } from '../models/book.model';
+import {Book, Review} from '../models/book.model';
 
 /**
  * Service zur Verwaltung von Buch-Operationen für Benutzer.
@@ -75,6 +75,22 @@ export class BookService {
     );
   }
 
+
+  /**
+   * Sendet eine neue Rezension an das Backend.
+   *
+   * @param userId Die ID des Benutzers
+   * @param isbn Die ISBN des Buchs
+   * @param review Ein Objekt mit Bewertung und Text
+   * @returns Ein Observable mit dem erzeugten Review-Objekt
+   */
+  submitReview(userId: string, isbn: string, review: { rating: number; reviewText: string }): Observable<Review> {
+    return this.http.post<Review>(
+      `${this.backendUrl}/users/${userId}/books/${isbn}/reviews`,
+      review
+    );
+  }
+
   /**
    * Löscht ein Buch aus der Sammlung eines Benutzers.
    *
@@ -85,6 +101,4 @@ export class BookService {
   deleteBook(userId: string, isbn: string) {
     return this.http.delete<void>(`${this.backendUrl}/users/${userId}/books/${isbn}`);
   }
-
-
 }

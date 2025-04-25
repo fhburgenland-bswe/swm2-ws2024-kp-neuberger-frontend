@@ -75,4 +75,31 @@ describe('BookDetailComponent', () => {
     expect(comp.errorMsg).toBeNull();
     httpMock.expectNone('http://localhost:8080/users/u1/books/10');
   }));
+  it('submits a new review and adds it to the list', fakeAsync(() => {
+    const mockReview = {
+      id: 'r1',
+      rating: 5,
+      reviewText: 'Tolles Buch!'
+    };
+
+    // Initial book load
+    httpMock.expectOne('http://localhost:8080/users/u1/books/10').flush({ ...mockBook });
+    tick();
+
+    // Set review form values
+    comp.reviewForm.setValue({ rating: 5, reviewText: 'Tolles Buch!' });
+    comp.submitReview();
+
+    const post = httpMock.expectOne('http://localhost:8080/users/u1/books/10/reviews');
+    expect(post.request.method).toBe('POST');
+    expect(post.request.body).toEqual({ rating: 5, reviewText: 'Tolles Buch!' });
+
+    post.flush(mockReview);
+    tick();
+
+    expect(comp.book!.reviews.length).toBe(1);
+    expect(comp.book!.reviews[0]).toEqual(mockReview);
+    expect(comp.successMsg).toBe('Rezension gespeichert');
+  }));
+
 });
