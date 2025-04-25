@@ -1,6 +1,6 @@
 <div class="toolbar">
-  <button routerLink="/">Home</button>
-  <button (click)="backToUser()">Zurück</button>
+    <button routerLink="/">Home</button>
+    <button (click)="backToUser()">Zurück</button>
 </div>
 
 <h1>Buchdetails</h1>
@@ -9,89 +9,113 @@
 <div *ngIf="errorMsg" class="error">{{ errorMsg }}</div>
 
 <div *ngIf="!loading && book">
-  <h2>{{ book.title }}</h2>
-  <p><strong>ID:</strong> {{ book.id || '-' }}</p>
-  <p><strong>ISBN:</strong> {{ book.isbn }}</p>
-  <p><strong>Autoren:</strong> {{ book.authors.length ? book.authors.join(', ') : '-' }}</p>
-  <p><strong>Verlag:</strong> {{ book.publisher || '-' }}</p>
-  <p><strong>Veröffentlichungsdatum:</strong> {{ book.publishedDate || '-' }}</p>
-  <p><strong>Beschreibung:</strong> {{ book.description || '-' }}</p>
-  <p><strong>Cover-URL:</strong> <a [href]="book.coverUrl" target="_blank">{{ book.coverUrl }}</a></p>
-  <img *ngIf="book.coverUrl" [src]="book.coverUrl" alt="Cover" class="cover" />
-
-  <form [formGroup]="ratingForm" (ngSubmit)="saveRating()" style="margin-bottom: 2rem;">
-    <label>
-      Bewertung (1–5):
-      <input type="number" formControlName="rating" min="1" max="5" />
-    </label>
-    <div *ngIf="ratingForm.invalid">
-      <small *ngIf="ratingForm.hasError('min') || ratingForm.hasError('max')">
-        Bewertung muss zwischen 1 und 5 liegen.
-      </small>
+    <h2>{{ book.title }}</h2>
+    <div style="margin: 1rem 0;">
+        <button (click)="enableEdit('details')">Buchinformationen bearbeiten</button>
+        <button (click)="enableEdit('rating')">Bewertung bearbeiten</button>
+        <button *ngIf="editingDetails || editingRating" (click)="cancelEdit()">Abbrechen</button>
     </div>
-    <button type="submit" [disabled]="ratingForm.invalid">Speichern</button>
-    <div *ngIf="successMsg" class="success">{{ successMsg }}</div>
-  </form>
 
-  <div style="margin: 2rem 0;">
-    <button (click)="showReviewForm = !showReviewForm">{{ 'Rezension erfassen' }}</button>
-  </div>
+    <form [formGroup]="detailsForm" (ngSubmit)="saveBookDetails()" *ngIf="editingDetails">
+        <label>
+            Titel:
+            <input formControlName="title" />
+        </label>
+        <label>
+            Autoren (durch Komma getrennt):
+            <input formControlName="authors" />
+        </label>
+        <label>
+            Beschreibung:
+            <textarea formControlName="description"></textarea>
+        </label>
+        <label>
+            Cover-URL:
+            <input formControlName="coverUrl" />
+        </label>
+        <button type="submit" [disabled]="detailsForm.invalid">Speichern</button>
+    </form>
 
-  <form *ngIf="showReviewForm" [formGroup]="reviewForm" (ngSubmit)="submitReview()" style="margin-bottom: 3rem;">
-    <h3>Rezension erfassen</h3>
-    <label>
-      Bewertung (1–5):
-      <input type="number" formControlName="rating" min="1" max="5" />
-    </label>
-    <br/>
-    <label>
-      Rezensionstext:
-      <textarea formControlName="reviewText"></textarea>
-    </label>
-    <div *ngIf="reviewForm.invalid">
-      <small *ngIf="reviewForm.hasError('required', 'rating') || reviewForm.hasError('min', 'rating') || reviewForm.hasError('max', 'rating')">
-        Bitte eine gültige Bewertung zwischen 1 und 5 angeben.
-      </small>
-      <br />
-      <small *ngIf="reviewForm.hasError('required', 'reviewText')">
-        Bitte gib einen Rezensionstext ein.
-      </small>
+    <div *ngIf="!editingDetails">
+        <p><strong>ID:</strong> {{ book.id || '-' }}</p>
+        <p><strong>ISBN:</strong> {{ book.isbn }}</p>
+        <p><strong>Autoren:</strong> {{ book.authors.length ? book.authors.join(', ') : '-' }}</p>
+        <p><strong>Verlag:</strong> {{ book.publisher || '-' }}</p>
+        <p><strong>Veröffentlichungsdatum:</strong> {{ book.publishedDate || '-' }}</p>
+        <p><strong>Beschreibung:</strong> {{ book.description || '-' }}</p>
+        <p><strong>Cover-URL:</strong> <a [href]="book.coverUrl" target="_blank">{{ book.coverUrl }}</a></p>
+        <img *ngIf="book.coverUrl" [src]="book.coverUrl" alt="Cover" class="cover" />
     </div>
-    <div style="margin-top: 1rem; display: flex; gap: 1rem;">
-      <button type="submit" [disabled]="reviewForm.invalid">Absenden</button>
-      <button type="button" (click)="showReviewForm = false">Abbrechen</button>
-    </div>
-  </form>
 
-  <h3>Rezensionen</h3>
-  <table *ngIf="book.reviews.length; else noReviews" class="review-table">
-    <thead>
-    <tr>
-        <th>ID</th>
-        <th>Rating</th>
-        <th>Text</th>
-        <th>Aktionen</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr *ngFor="let r of book.reviews">
-      <td>{{ r.id }}</td>
-      <td>{{ r.rating }}</td>
-      <td>{{ r.reviewText }}</td>
-        <td>
-            <button (click)="startEditReview(r.id!, r.rating, r.reviewText)">
-                Bearbeiten
-            </button>
-            <button (click)="deleteReview(r.id!)">
-                Löschen
-            </button>
-        </td>
-    </tr>
-    </tbody>
-  </table>
-  <ng-template #noReviews>
-    <p>Keine Rezensionen vorhanden.</p>
-  </ng-template>
+    <form [formGroup]="ratingForm" (ngSubmit)="saveRating()" style="margin-bottom: 2rem;">
+        <label>
+            Bewertung (1–5):
+            <input type="number" formControlName="rating" min="1" max="5" [readonly]="!editingRating" />
+        </label>
+        <div *ngIf="ratingForm.invalid && editingRating">
+            <small *ngIf="ratingForm.hasError('min') || ratingForm.hasError('max')">
+                Bewertung muss zwischen 1 und 5 liegen.
+            </small>
+        </div>
+        <button type="submit" [disabled]="ratingForm.invalid || !editingRating">Speichern</button>
+        <div *ngIf="successMsg" class="success">{{ successMsg }}</div>
+    </form>
+
+    <div style="margin: 2rem 0;">
+        <button (click)="showReviewForm = !showReviewForm">Rezension erfassen</button>
+    </div>
+
+    <form *ngIf="showReviewForm" [formGroup]="reviewForm" (ngSubmit)="submitReview()" style="margin-bottom: 3rem;">
+        <h3>Rezension erfassen</h3>
+        <label>
+            Bewertung (1–5):
+            <input type="number" formControlName="rating" min="1" max="5" />
+        </label>
+        <br/>
+        <label>
+            Rezensionstext:
+            <textarea formControlName="reviewText"></textarea>
+        </label>
+        <div *ngIf="reviewForm.invalid">
+            <small *ngIf="reviewForm.hasError('required', 'rating') || reviewForm.hasError('min', 'rating') || reviewForm.hasError('max', 'rating')">
+                Bitte eine gültige Bewertung zwischen 1 und 5 angeben.
+            </small>
+            <br />
+            <small *ngIf="reviewForm.hasError('required', 'reviewText')">
+                Bitte gib einen Rezensionstext ein.
+            </small>
+        </div>
+        <div style="margin-top: 1rem; display: flex; gap: 1rem;">
+            <button type="submit" [disabled]="reviewForm.invalid">Absenden</button>
+            <button type="button" (click)="showReviewForm = false">Abbrechen</button>
+        </div>
+    </form>
+
+    <h3>Rezensionen</h3>
+    <table *ngIf="book.reviews.length; else noReviews" class="review-table">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Rating</th>
+            <th>Text</th>
+            <th>Aktionen</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let r of book.reviews">
+            <td>{{ r.id }}</td>
+            <td>{{ r.rating }}</td>
+            <td>{{ r.reviewText }}</td>
+            <td>
+                <button (click)="startEditReview(r.id!, r.rating, r.reviewText)">Bearbeiten</button>
+                <button (click)="deleteReview(r.id!)">Löschen</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <ng-template #noReviews>
+        <p>Keine Rezensionen vorhanden.</p>
+    </ng-template>
 
     <form *ngIf="editingReviewId" [formGroup]="editReviewForm" (ngSubmit)="saveEditedReview()" class="edit-review-form">
         <h4>Rezension bearbeiten</h4>
