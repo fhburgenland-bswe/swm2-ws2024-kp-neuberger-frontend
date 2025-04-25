@@ -45,6 +45,43 @@ export class BookService {
     return throwError(() => err);
   }
 
+  /**
+   * Ruft die Details eines bestimmten Buchs für einen Benutzer ab.
+   *
+   * @param userId Die ID des Benutzers
+   * @param isbn Die ISBN des Buchs, dessen Details geladen werden sollen
+   * @returns Ein Observable mit dem Book-Objekt
+   */
+  getBookDetails(userId: string, isbn: string): Observable<Book> {
+    return this.http.get<Book>(`${this.backendUrl}/users/${userId}/books/${isbn}`);
+  }
+
+  /**
+   * Aktualisiert die Bewertung eines Buchs für einen bestimmten Benutzer.
+   *
+   * @param userId Die ID des Benutzers
+   * @param isbn Die ISBN des Buchs
+   * @param rating Die neue Bewertung
+   * @returns Ein Observable mit dem aktualisierten Book-Objekt
+   */
+  updateBookRating(
+    userId: string,
+    isbn: string,
+    rating: number
+  ): Observable<Book> {
+    return this.http.put<Book>(
+      `${this.backendUrl}/users/${userId}/books/${isbn}`,
+      { rating }
+    );
+  }
+
+  /**
+   * Löscht ein Buch aus der Sammlung eines Benutzers.
+   *
+   * @param userId Die ID des Benutzers
+   * @param isbn Die ISBN des Buchs, das gelöscht werden soll
+   * @returns Ein Observable, das den Abschluss der Löschung signalisiert
+   */
   deleteBook(userId: string, isbn: string) {
     return this.http.delete<void>(`${this.backendUrl}/users/${userId}/books/${isbn}`);
   }

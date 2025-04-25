@@ -77,6 +77,12 @@
         <td>{{ b.isbn }}</td>
         <td>{{ b.title }}</td>
         <td>{{ b.rating ?? '-' }}</td>
+        <button
+          routerLink="/users/{{user.id}}/books/{{b.isbn}}"
+          class="link-button"
+        >
+          Buchdetails
+        </button>
         <td>
           <button (click)="deleteBook(b.isbn)" aria-label="Löschen">🗑️</button>
         </td>

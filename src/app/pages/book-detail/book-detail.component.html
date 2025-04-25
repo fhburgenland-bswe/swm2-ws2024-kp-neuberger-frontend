@@ -1,0 +1,54 @@
+<div class="toolbar">
+  <button routerLink="/">Home</button>
+  <button (click)="backToUser()">Zurück</button>
+</div>
+
+<h1>Buchdetails</h1>
+
+<div *ngIf="loading">Lade Buchdaten …</div>
+<div *ngIf="errorMsg" class="error">{{ errorMsg }}</div>
+
+<div *ngIf="!loading && book">
+  <h2>{{ book.title }}</h2>
+  <p><strong>ID:</strong> {{ book.id || '-' }}</p>
+  <p><strong>ISBN:</strong> {{ book.isbn }}</p>
+  <p><strong>Autoren:</strong> {{ book.authors.length ? book.authors.join(', ') : '-' }}</p>
+  <p><strong>Verlag:</strong> {{ book.publisher || '-' }}</p>
+  <p><strong>Veröffentlichungsdatum:</strong> {{ book.publishedDate || '-' }}</p>
+  <p><strong>Beschreibung:</strong> {{ book.description || '-' }}</p>
+  <p><strong>Cover-URL:</strong> <a [href]="book.coverUrl" target="_blank">{{ book.coverUrl }}</a></p>
+  <img *ngIf="book.coverUrl" [src]="book.coverUrl" alt="Cover" class="cover" />
+
+  <form [formGroup]="ratingForm" (ngSubmit)="saveRating()">
+    <label>
+      Bewertung (1–5):
+      <input type="number" formControlName="rating" min="1" max="5" />
+    </label>
+    <div *ngIf="ratingForm.invalid">
+      <small *ngIf="ratingForm.hasError('min') || ratingForm.hasError('max')">
+        Bewertung muss zwischen 1 und 5 liegen.
+      </small>
+    </div>
+    <button type="submit" [disabled]="ratingForm.invalid">Speichern</button>
+    <div *ngIf="successMsg" class="success">{{ successMsg }}</div>
+  </form>
+
+  <h3>Rezensionen</h3>
+  <table *ngIf="book.reviews.length; else noReviews" class="review-table">
+    <thead>
+    <tr>
+      <th>ID</th><th>Rating</th><th>Text</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr *ngFor="let r of book.reviews">
+      <td>{{ r.id }}</td>
+      <td>{{ r.rating }}</td>
+      <td>{{ r.reviewText }}</td>
+    </tr>
+    </tbody>
+  </table>
+  <ng-template #noReviews>
+    <p>Keine Rezensionen vorhanden.</p>
+  </ng-template>
+</div>
