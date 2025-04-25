@@ -67,7 +67,10 @@
   <table *ngIf="book.reviews.length; else noReviews" class="review-table">
     <thead>
     <tr>
-      <th>ID</th><th>Rating</th><th>Text</th>
+        <th>ID</th>
+        <th>Rating</th>
+        <th>Text</th>
+        <th>Aktionen</th>
     </tr>
     </thead>
     <tbody>
@@ -78,6 +81,9 @@
         <td>
             <button (click)="startEditReview(r.id!, r.rating, r.reviewText)">
                 Bearbeiten
+            </button>
+            <button (click)="deleteReview(r.id!)">
+                Löschen
             </button>
         </td>
     </tr>

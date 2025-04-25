@@ -180,7 +180,6 @@ export class BookDetailComponent implements OnInit {
     const userId   = this.route.snapshot.paramMap.get('userId')!;
     const isbn     = this.route.snapshot.paramMap.get('isbn')!;
     const { rating, reviewText } = this.editReviewForm.value;
-
     this.bs.updateReview(userId, isbn, this.editingReviewId, { rating, reviewText })
         .pipe(catchError(() => {
           this.editError = 'Fehler beim Speichern der Rezension';
@@ -195,6 +194,27 @@ export class BookDetailComponent implements OnInit {
         });
   }
 
+  /**
+   * Löscht eine Rezension nach Bestätigung.
+   *
+   * @param reviewId ID der zu löschenden Rezension
+   */
+  deleteReview(reviewId: string): void {
+    if (!this.book) { return; }
+    if (!confirm('Rezension wirklich löschen?')) { return; }
+    const userId = this.route.snapshot.paramMap.get('userId')!;
+    const isbn   = this.route.snapshot.paramMap.get('isbn')!;
+    this.bs.deleteReview(userId, isbn, reviewId)
+        .pipe(
+            catchError(() => {
+              this.errorMsg = 'Fehler beim Löschen der Rezension';
+              return of(null);
+            })
+        )
+        .subscribe(() => {
+          this.book!.reviews = this.book!.reviews.filter(r => r.id !== reviewId);
+        });
+  }
 
   /**
    * Navigiert zurück zur User-Detail-Seite basierend auf dem userId aus der URL.

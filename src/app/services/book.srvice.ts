@@ -113,6 +113,24 @@ export class BookService {
         .pipe(catchError(this.handleError));
   }
 
+  /**
+   * Löscht eine Rezension eines Buchs für einen Benutzer.
+   *
+   * @param userId    ID des Benutzers
+   * @param isbn      ISBN des Buchs
+   * @param reviewId  ID der zu löschenden Rezension
+   * @returns Ein Observable, das den Abschluss der Löschung signalisiert
+   */
+  deleteReview(
+      userId: string,
+      isbn: string,
+      reviewId: string
+  ): Observable<void> {
+    return this.http
+        .delete<void>(`${this.backendUrl}/users/${userId}/books/${isbn}/reviews/${reviewId}`)
+        .pipe(catchError(this.handleError));
+  }
+
 
   /**
    * Löscht ein Buch aus der Sammlung eines Benutzers.
