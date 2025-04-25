@@ -92,6 +92,29 @@ export class BookService {
   }
 
   /**
+   * Aktualisiert eine vorhandene Rezension eines Buchs.
+   *
+   * @param userId    ID des Benutzers
+   * @param isbn      ISBN des Buchs
+   * @param reviewId  ID der zu aktualisierenden Rezension
+   * @param payload   Objekt mit neuem Rating und Text
+   */
+  updateReview(
+      userId: string,
+      isbn: string,
+      reviewId: string,
+      payload: { rating: number; reviewText: string }
+  ): Observable<Review> {
+    return this.http
+        .put<Review>(
+            `${this.backendUrl}/users/${userId}/books/${isbn}/reviews/${reviewId}`,
+            payload
+        )
+        .pipe(catchError(this.handleError));
+  }
+
+
+  /**
    * Löscht ein Buch aus der Sammlung eines Benutzers.
    *
    * @param userId Die ID des Benutzers

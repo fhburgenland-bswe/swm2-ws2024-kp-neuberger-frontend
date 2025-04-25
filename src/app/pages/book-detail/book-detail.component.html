@@ -75,10 +75,38 @@
       <td>{{ r.id }}</td>
       <td>{{ r.rating }}</td>
       <td>{{ r.reviewText }}</td>
+        <td>
+            <button (click)="startEditReview(r.id!, r.rating, r.reviewText)">
+                Bearbeiten
+            </button>
+        </td>
     </tr>
     </tbody>
   </table>
   <ng-template #noReviews>
     <p>Keine Rezensionen vorhanden.</p>
   </ng-template>
+
+    <form *ngIf="editingReviewId" [formGroup]="editReviewForm" (ngSubmit)="saveEditedReview()" class="edit-review-form">
+        <h4>Rezension bearbeiten</h4>
+        <label>
+            Bewertung (1–5):
+            <input type="number" formControlName="rating" min="1" max="5" />
+        </label>
+        <div *ngIf="editReviewForm.invalid">
+            <small *ngIf="editReviewForm.hasError('min','rating') || editReviewForm.hasError('max','rating')">
+                Bewertung muss zwischen 1 und 5 liegen.
+            </small>
+        </div>
+        <label>
+            Text:
+            <textarea formControlName="reviewText"></textarea>
+        </label>
+        <div *ngIf="editReviewForm.get('reviewText')?.hasError('required')">
+            <small>Text ist erforderlich.</small>
+        </div>
+        <button type="submit" [disabled]="editReviewForm.invalid">Speichern</button>
+        <button type="button" (click)="cancelEditReview()">Abbrechen</button>
+        <div *ngIf="editError" class="error">{{ editError }}</div>
+    </form>
 </div>
