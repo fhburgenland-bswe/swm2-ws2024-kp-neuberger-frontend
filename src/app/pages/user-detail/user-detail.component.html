@@ -62,14 +62,33 @@
     </form>
   </section>
 
-  <ng-container *ngIf="user.books.length; else noBooks">
+    <section class="search-books">
+        <h3>Bücher filtern</h3>
+        <form [formGroup]="searchForm" (ngSubmit)="searchBooks()">
+            <label> Titel:
+                <input formControlName="title" />
+            </label>
+            <label> Autor:
+                <input formControlName="author" />
+            </label>
+            <label> Jahr:
+                <input type="number" formControlName="year" />
+            </label>
+            <button type="submit">Suchen</button>
+            <button type="button" (click)="resetSearch()">Zurücksetzen</button>
+        </form>
+    </section>
+
+    <ng-container *ngIf="user.books.length; else noBooks">
     <table class="book-table">
       <thead>
       <tr>
         <th>ISBN</th>
         <th>Titel</th>
         <th>Bewertung</th>
-        <th>Aktion</th>
+        <th>Buchdetails</th>
+        <th>Rezensionen</th>
+        <th class="action-header">Löschen</th>
       </tr>
       </thead>
       <tbody>
@@ -77,12 +96,14 @@
         <td>{{ b.isbn }}</td>
         <td>{{ b.title }}</td>
         <td>{{ b.rating ?? '-' }}</td>
-        <button
-          routerLink="/users/{{user.id}}/books/{{b.isbn}}"
-          class="link-button"
-        >
-          Buchdetails
-        </button>
+        <td>
+          <button
+            routerLink="/users/{{user.id}}/books/{{b.isbn}}"
+            class="link-button"
+          >
+            Buchdetails
+          </button>
+        </td>
           <td>
               <button (click)="toggleReviews(b.isbn)">
                   Rezensionen anzeigen

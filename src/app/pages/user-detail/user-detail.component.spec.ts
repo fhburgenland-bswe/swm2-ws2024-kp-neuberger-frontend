@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import {HttpClientTestingModule} from '@angular/common/http/testing';
 import {ActivatedRoute, convertToParamMap} from '@angular/router';
 import { of, throwError } from 'rxjs';
-
 import { UserDetailComponent } from './user-detail.component';
 import { UserService } from '../../services/user.service';
 import { User } from '../../models/user.model';
@@ -48,31 +47,40 @@ describe('UserDetailComponent', () => {
   };
 
   beforeEach(async () => {
-    const userServiceSpy = jasmine.createSpyObj<UserService>('UserService', ['getUserById', 'updateUser']);
-    userServiceSpy.getUserById.and.returnValue(of(mockUser));
-    userServiceSpy.updateUser.and.returnValue(of({ ...mockUser, name: 'Updated', email: 'updated@example.com' }));
-    bookServiceSpy = jasmine.createSpyObj<BookService>('BookService', ['addBookByIsbn', 'deleteBook','getReviews']);
+    const userServiceSpy = jasmine.createSpyObj<UserService>(
+        'UserService',
+        ['getUserById', 'updateUser']
+    );
+    userServiceSpy.getUserById.and.callFake(() => {
+      const userClone = {
+        ...mockUser,
+        books: mockUser.books.map(b => ({ ...b }))
+      };
+      return of(userClone);
+    });
+    userServiceSpy.updateUser.and.returnValue(of({
+      ...mockUser,
+      name: 'Updated',
+      email: 'updated@example.com'
+    }));
+    bookServiceSpy = jasmine.createSpyObj<BookService>(
+        'BookService',
+        ['addBookByIsbn', 'deleteBook', 'getReviews', 'searchBooks']
+    );
+
     await TestBed.configureTestingModule({
-      imports: [
-        UserDetailComponent,
-        HttpClientTestingModule,
-        ReactiveFormsModule
-      ],
+      imports: [ UserDetailComponent, HttpClientTestingModule, ReactiveFormsModule ],
       providers: [
         { provide: UserService, useValue: userServiceSpy },
         { provide: BookService, useValue: bookServiceSpy },
-        {
-          provide: ActivatedRoute,
-          useValue: {
-            paramMap: of(convertToParamMap({ userId: 'abc' }))
-          }
-        },
-        FormBuilder,
+        { provide: ActivatedRoute, useValue: { paramMap: of(convertToParamMap({ userId: 'abc' })) } },
+        FormBuilder
       ]
     }).compileComponents();
-    fixture = TestBed.createComponent(UserDetailComponent);
+
+    fixture     = TestBed.createComponent(UserDetailComponent);
     userService = TestBed.inject(UserService) as jasmine.SpyObj<UserService>;
-    comp = fixture.componentInstance;
+    comp        = fixture.componentInstance;
     fixture.detectChanges();
   });
 
@@ -161,6 +169,24 @@ describe('UserDetailComponent', () => {
   }));
 
   it('should delete a book after confirmation and show success message', fakeAsync(() => {
+    comp.user = {
+      id: 'abc',
+      name: 'Test User',
+      email: 'test@example.com',
+      books: [
+        {
+          isbn: '123',
+          title: 'Test Book',
+          authors: [],
+          publisher: '',
+          publishedDate: '',
+          description: '',
+          coverUrl: '',
+          rating: 5,
+          reviews: []
+        }
+      ]
+    };
     spyOn(window, 'confirm').and.returnValue(true);
     bookServiceSpy.deleteBook.and.returnValue(of(void 0));
     const initialCount = comp.user!.books.length;
@@ -208,22 +234,16 @@ describe('UserDetailComponent', () => {
       { id: 'r2', rating: 3, reviewText: 'Good' }
     ];
     bookServiceSpy.getReviews.and.returnValue(of(mockReviews));
-
-    // initially no reviews loaded
     expect(comp.reviewsMap['10']).toBeUndefined();
     expect(comp.showReviewsFor).toBeNull();
-
-    // toggle open
     comp.toggleReviews('10');
     tick();
-
     expect(bookServiceSpy.getReviews).toHaveBeenCalledWith('abc', '10');
     expect(comp.reviewsMap['10']).toBe(mockReviews);
     expect(comp.showReviewsFor).toBe('10');
   }));
 
   it('should collapse reviews when toggled again', () => {
-    // simulate already open
     comp.showReviewsFor = '10';
     comp.toggleReviews('10');
     expect(comp.showReviewsFor).toBeNull();
@@ -238,6 +258,63 @@ describe('UserDetailComponent', () => {
     expect(bookServiceSpy.getReviews).toHaveBeenCalled();
     expect(comp.reviewsMap['10']).toEqual([]);  // you probably clear to empty on error
     expect(comp.reviewsError).toBe('Rezensionen konnten nicht geladen werden.');
+  }));
+
+  it('should call searchBooks and update the list', fakeAsync(() => {
+    const filtered: Book[] = [
+      {
+        isbn: '123',
+        title: 'Gefiltertes Buch',
+        authors: [],
+        publisher: '',
+        publishedDate: '',
+        description: '',
+        coverUrl: '',
+        rating: 4,
+        reviews: []
+      }
+    ];
+    bookServiceSpy.searchBooks.and.returnValue(of(filtered));
+
+    comp.user = mockUser;
+    comp.initSearchForm();
+    comp.searchForm.setValue({ title: 'A', author: '', year: null });
+
+    comp.searchBooks();
+    tick();
+
+    // @ts-expect-error: spying on overloaded method
+    expect(bookServiceSpy.searchBooks).toHaveBeenCalledWith('abc', 'A', '', null);
+    expect(comp.user!.books).toEqual(filtered);
+    expect(comp.noBooksFound).toBeFalse();
+  }));
+
+
+  it('should set noBooksFound when search returns empty', fakeAsync(() => {
+    bookServiceSpy.searchBooks.and.returnValue(of([]));
+
+    comp.user = mockUser;
+    comp.initSearchForm();
+    comp.searchForm.setValue({ title: 'ZZZ', author: '', year: null });
+
+    comp.searchBooks();
+    tick();
+
+    expect(comp.user!.books).toEqual([]);
+    expect(comp.noBooksFound).toBeTrue();
+  }));
+
+  it('should reset filters and restore original list', fakeAsync(() => {
+    comp.user = { ...mockUser, books: [ /* evtl schon gefiltert */ ] };
+    comp.originalBooks = [...mockUser.books];
+    comp.searchForm.reset({ title: 'X', author: 'Y', year: 2020 });
+
+    comp.resetSearch();
+    tick();
+
+    expect(comp.user!.books).toEqual(mockUser.books);
+    expect(comp.searchForm.value).toEqual({ title: '', author: '', year: null });
+    expect(comp.noBooksFound).toBeFalse();
   }));
 
 });
