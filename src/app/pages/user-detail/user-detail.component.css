@@ -58,3 +58,15 @@ form button {
   padding: 0;
 }
 
+.book-table th.action-header,
+.book-table td.action-cell {
+  width: 200px;
+}
+
+.action-cell .link-button,
+.action-cell .delete-button {
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  margin-right: 0.5rem;
+}
+

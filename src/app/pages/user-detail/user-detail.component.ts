@@ -8,7 +8,7 @@ import { UserService } from '../../services/user.service';
 import { User }        from '../../models/user.model';
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import { BookService } from '../../services/book.srvice';
-import {Review} from "../../models/book.model";
+import {Book, Review} from "../../models/book.model";
 
 /**
  * Komponente zur Anzeige von Benutzerdetails.
@@ -40,7 +40,9 @@ export class UserDetailComponent implements OnInit {
   reviewsMap: Record<string, Review[]> = {};
   showReviewsFor: string | null = null;
   reviewsError: string | null = null;
-
+  searchForm!: FormGroup;
+  originalBooks: Book[] = [];
+  noBooksFound = false;
 
   /**
    * @param userService Service zum Abrufen der Benutzerdaten vom Backend
@@ -80,6 +82,8 @@ export class UserDetailComponent implements OnInit {
         .subscribe(u => {
           this.user = u;
           this.loading = false;
+          this.originalBooks = u ? [...u.books] : [];
+          this.initSearchForm();
           this.initIsbnForm();
         });
     });
@@ -252,4 +256,54 @@ export class UserDetailComponent implements OnInit {
           this.reviewsMap[isbn] = revs;
         });
   }
+
+  /**
+   * Initialisiert das Suchformular mit leeren Feldern.
+   * Setzt zudem den Indikator `noBooksFound` zurück.
+   */
+  initSearchForm(): void {
+    this.searchForm = this.fb.group({
+      title:  [''],
+      author: [''],
+      year:   [null]
+    });
+    this.noBooksFound = false;
+  }
+
+  /**
+   * Führt die Buchsuche anhand der aktuellen Formularwerte durch.
+   * - Liest Filterkriterien (Titel, Autor, Jahr) aus `searchForm`.
+   * - Ruft den `BookService.searchBooks` auf.
+   * - Bei HTTP-Fehlern wird `errorMsg` gesetzt und ein leerer Array zurückgegeben.
+   * - Bei Erfolg wird die Liste `user.books` auf die Suchergebnisse gesetzt.
+   * - `noBooksFound` wird auf true gesetzt, wenn keine Ergebnisse zurückkommen.
+   */
+  searchBooks(): void {
+    if (!this.user) return;
+    const { title, author, year } = this.searchForm.value;
+    this.bookService.searchBooks(this.user.id!, title, author, year)
+        .pipe(
+            catchError(() => {
+              this.errorMsg = 'Fehler beim Suchen der Bücher';
+              return of([]);
+            })
+        )
+        .subscribe(results => {
+          this.user!.books = results;
+          this.noBooksFound = results.length === 0;
+        });
+  }
+
+  /**
+   * Setzt die Suche zurück:
+   * - Formulareingaben werden geleert.
+   * - Originalbuchliste (`originalBooks`) wird wiederhergestellt.
+   * - `noBooksFound` wird auf false zurückgesetzt.
+   */
+  resetSearch(): void {
+    this.searchForm.reset({ title: '', author: '', year: null });
+    this.user!.books = [...this.originalBooks];
+    this.noBooksFound = false;
+  }
+
 }

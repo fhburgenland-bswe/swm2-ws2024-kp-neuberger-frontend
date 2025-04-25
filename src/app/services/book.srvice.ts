@@ -92,6 +92,20 @@ export class BookService {
   }
 
   /**
+   * Sucht Bücher eines Benutzers anhand optionaler Kriterien.
+   */
+  searchBooks(userId: string, title?: string, author?: string, year?: number) {
+    const params: Record<string,string> = {};
+    if (title) params['title']  = title;
+    if (author) params['author'] = author;
+    if (year) params['year']   = year.toString();
+
+    return this.http
+        .get<Book[]>(`${this.backendUrl}/users/${userId}/books/search`, { params })
+        .pipe(catchError(this.handleError));
+  }
+
+  /**
    * Holt alle Rezensionen zu einem Buch für einen Benutzer.
    *
    * @param userId ID des Benutzers
