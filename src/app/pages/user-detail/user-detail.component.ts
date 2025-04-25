@@ -2,7 +2,7 @@ import { Component, OnInit }        from '@angular/core';
 import { CommonModule, NgIf, NgFor } from '@angular/common';
 import { RouterModule, ActivatedRoute } from '@angular/router';
 import { HttpClientModule }          from '@angular/common/http';
-import { catchError, of }            from 'rxjs';
+import {catchError, finalize, of} from 'rxjs';
 
 import { UserService } from '../../services/user.service';
 import { User }        from '../../models/user.model';
@@ -43,6 +43,8 @@ export class UserDetailComponent implements OnInit {
   searchForm!: FormGroup;
   originalBooks: Book[] = [];
   noBooksFound = false;
+  ratingFilterForm!: FormGroup;
+  filterLoading = false;
 
   /**
    * @param userService Service zum Abrufen der Benutzerdaten vom Backend
@@ -85,6 +87,7 @@ export class UserDetailComponent implements OnInit {
           this.originalBooks = u ? [...u.books] : [];
           this.initSearchForm();
           this.initIsbnForm();
+          this.initRatingFilterForm();
         });
     });
   }
@@ -213,24 +216,44 @@ export class UserDetailComponent implements OnInit {
    */
   deleteBook(bookIsbn: string): void {
     if (!this.user) return;
-
     const confirmed = confirm('Buch wirklich löschen?');
     if (!confirmed) return;
-
     const userId = this.user.id!;
-
     this.bookService.deleteBook(userId, bookIsbn)
       .subscribe({
         next: () => {
           this.user!.books = this.user!.books.filter(b => b.isbn !== bookIsbn);
           this.deleteSuccess = 'Buch gelöscht';
-          this.addError = null; // vorherigen Fehler zurücksetzen
+          this.addError = null;
           setTimeout(() => this.deleteSuccess = null, 3000);
         },
         error: () => {
           this.addError = 'Löschen fehlgeschlagen';
         }
       });
+  }
+
+  /**
+   * Lädt die Bücher mit dem ausgewählten Rating neu.
+   */
+  filterByRating(): void {
+    if (!this.user) return;
+    this.errorMsg = null;
+    this.filterLoading = true;
+    this.noBooksFound  = false;
+
+    const rating = this.ratingFilterForm.value.ratingFilter;
+    this.bookService.getBooks(this.user.id!, rating ? +rating : undefined)
+        .pipe(finalize(() => this.filterLoading = false))
+        .subscribe({
+          next: books => {
+            this.user!.books = books;
+            this.noBooksFound = books.length === 0;
+          },
+          error: () => {
+            this.errorMsg = 'Fehler beim Laden der Bücher';
+          }
+        });
   }
 
   /**
@@ -271,6 +294,17 @@ export class UserDetailComponent implements OnInit {
   }
 
   /**
+   * Initialisiert das Formular zum Filtern nach Bewertung.
+   */
+  private initRatingFilterForm(): void {
+    this.ratingFilterForm = this.fb.group({
+      ratingFilter: ['']
+    });
+    this.noBooksFound = false;
+    this.filterLoading = false;
+  }
+
+  /**
    * Führt die Buchsuche anhand der aktuellen Formularwerte durch.
    * - Liest Filterkriterien (Titel, Autor, Jahr) aus `searchForm`.
    * - Ruft den `BookService.searchBooks` auf.
@@ -305,5 +339,4 @@ export class UserDetailComponent implements OnInit {
     this.user!.books = [...this.originalBooks];
     this.noBooksFound = false;
   }
-
 }

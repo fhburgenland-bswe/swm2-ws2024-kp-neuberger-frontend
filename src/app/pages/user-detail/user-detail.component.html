@@ -62,8 +62,19 @@
     </form>
   </section>
 
+    <section class="rating-filter" [formGroup]="ratingFilterForm">
+        <label for="ratingSelect"><h3>Bücher nach Bewertung filtern</h3></label>
+        <select id="ratingSelect" formControlName="ratingFilter" (change)="filterByRating()">
+            <option value="">Alle</option>
+            <option *ngFor="let r of [1,2,3,4,5]" [value]="r">{{ r }} Stern{{ r>1 ? 'e' : '' }}</option>
+        </select>
+    </section>
+
+    <div *ngIf="filterLoading" class="spinner">
+        Lade Bücher …
+    </div>
     <section class="search-books">
-        <h3>Bücher filtern</h3>
+        <h3>Bücher suchen</h3>
         <form [formGroup]="searchForm" (ngSubmit)="searchBooks()">
             <label> Titel:
                 <input formControlName="title" />
@@ -74,7 +85,10 @@
             <label> Jahr:
                 <input type="number" formControlName="year" />
             </label>
-            <button type="submit">Suchen</button>
+            <button type="submit"
+             [disabled]="ratingFilterForm.get('ratingFilter')?.value !== ''">
+              Suchen
+            </button>
             <button type="button" (click)="resetSearch()">Zurücksetzen</button>
         </form>
     </section>
@@ -128,7 +142,7 @@
           </ng-template>
       </ng-container>
   </ng-container>
-  <ng-template #noBooks>
-    <p>Keine Bücher vorhanden.</p>
-  </ng-template>
+    <ng-template #noBooks>
+        <p *ngIf="!filterLoading">Keine Bücher mit dieser Bewertung vorhanden.</p>
+    </ng-template>
 </div>

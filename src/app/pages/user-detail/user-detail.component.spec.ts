@@ -65,7 +65,7 @@ describe('UserDetailComponent', () => {
     }));
     bookServiceSpy = jasmine.createSpyObj<BookService>(
         'BookService',
-        ['addBookByIsbn', 'deleteBook', 'getReviews', 'searchBooks']
+        ['addBookByIsbn', 'deleteBook', 'getReviews', 'searchBooks','getBooks' ]
     );
 
     await TestBed.configureTestingModule({
@@ -317,4 +317,32 @@ describe('UserDetailComponent', () => {
     expect(comp.noBooksFound).toBeFalse();
   }));
 
+  it('should fetch and display books matching selected rating', fakeAsync(() => {
+    const fb = TestBed.inject(FormBuilder);
+    const filtered = [{ ...mockUser.books[0], rating: 3 }];
+    bookServiceSpy.getBooks.and.returnValue(of(filtered));
+    comp.user = { ...mockUser, books: mockUser.books };
+    comp.originalBooks = [...mockUser.books];
+    comp.ratingFilterForm = fb.group({ ratingFilter: [''] });
+    comp.ratingFilterForm.setValue({ ratingFilter: 3 });
+    comp.filterByRating();
+    tick();
+    expect(bookServiceSpy.getBooks).toHaveBeenCalledWith('abc', 3);
+    expect(comp.user!.books).toEqual(filtered);
+    expect(comp.noBooksFound).toBeFalse();
+  }));
+
+  it('should show "no books found" message when filter returns empty', fakeAsync(() => {
+    const fb = TestBed.inject(FormBuilder);
+    bookServiceSpy.getBooks.and.returnValue(of([]));
+    comp.user = { ...mockUser, books: mockUser.books };
+    comp.originalBooks = [...mockUser.books];
+    comp.ratingFilterForm = fb.group({ ratingFilter: [''] });
+    comp.ratingFilterForm.setValue({ ratingFilter: 5});
+    comp.filterByRating();
+    tick();
+    expect(bookServiceSpy.getBooks).toHaveBeenCalledWith('abc', 5);
+    expect(comp.user!.books).toEqual([]);
+    expect(comp.noBooksFound).toBeTrue();
+  }));
 });
