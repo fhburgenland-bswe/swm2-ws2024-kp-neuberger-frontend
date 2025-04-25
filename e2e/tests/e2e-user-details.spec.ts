@@ -68,8 +68,8 @@ test.describe('E2E: User Detail Page (/users/:id)', () => {
     });
 
     await page.goto('http://localhost:4200/users/abc');
-    await page.waitForSelector('text=Keine Bücher vorhanden.');
-    await expect(page.locator('text=Keine Bücher vorhanden.')).toBeVisible();
+    await page.waitForSelector('text=Keine Bücher mit dieser Bewertung vorhanden.');
+    await expect(page.locator('text=Keine Bücher mit dieser Bewertung vorhanden.')).toBeVisible();
   });
 
   test('shows error message when GET fails', async ({ page }) => {

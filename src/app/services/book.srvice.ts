@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import {Book, Review} from '../models/book.model';
@@ -102,6 +102,23 @@ export class BookService {
 
     return this.http
         .get<Book[]>(`${this.backendUrl}/users/${userId}/books/search`, { params })
+        .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * Ruft die Bücher eines Benutzers optional nach Bewertung gefiltert ab.
+   *
+   * @param userId ID des Benutzers
+   * @param rating (Optional) Bewertung von 1–5
+   * @returns Ein Observable mit der Liste der Bücher
+   */
+  getBooks(userId: string, rating?: number): Observable<Book[]> {
+    let params = new HttpParams();
+    if (rating != null) {
+      params = params.set('rating', rating.toString());
+    }
+    return this.http
+        .get<Book[]>(`${this.backendUrl}/users/${userId}/books`, { params })
         .pipe(catchError(this.handleError));
   }
 
