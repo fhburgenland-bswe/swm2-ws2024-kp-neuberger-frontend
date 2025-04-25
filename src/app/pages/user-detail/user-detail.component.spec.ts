@@ -51,7 +51,7 @@ describe('UserDetailComponent', () => {
     const userServiceSpy = jasmine.createSpyObj<UserService>('UserService', ['getUserById', 'updateUser']);
     userServiceSpy.getUserById.and.returnValue(of(mockUser));
     userServiceSpy.updateUser.and.returnValue(of({ ...mockUser, name: 'Updated', email: 'updated@example.com' }));
-    bookServiceSpy = jasmine.createSpyObj<BookService>('BookService', ['addBookByIsbn']);
+    bookServiceSpy = jasmine.createSpyObj<BookService>('BookService', ['addBookByIsbn', 'deleteBook']);
     await TestBed.configureTestingModule({
       imports: [
         UserDetailComponent,
@@ -158,5 +158,47 @@ describe('UserDetailComponent', () => {
     comp.addBook();
     expect(bookServiceSpy.addBookByIsbn).not.toHaveBeenCalled();
     expect(comp.addError).toBeNull();
+  }));
+
+  it('should delete a book after confirmation and show success message', fakeAsync(() => {
+    spyOn(window, 'confirm').and.returnValue(true);
+    bookServiceSpy.deleteBook.and.returnValue(of(void 0));
+    const initialCount = comp.user!.books.length;
+    const isbnToDelete = comp.user!.books[0].isbn;
+    comp.deleteBook(isbnToDelete);
+    tick();
+    expect(bookServiceSpy.deleteBook).toHaveBeenCalledWith('abc', isbnToDelete);
+    expect(comp.user!.books.length).toBe(initialCount - 1);
+    expect(comp.user!.books.some(b => b.isbn === isbnToDelete)).toBeFalse();
+    expect(comp.deleteSuccess).toBe('Buch gelöscht');
+    expect(comp.addError).toBeNull();
+  }));
+
+  it('should show error message if delete fails', fakeAsync(() => {
+    spyOn(window, 'confirm').and.returnValue(true);
+    bookServiceSpy.deleteBook.and.returnValue(throwError(() => ({ status: 500 })));
+    comp.user = {
+      id: 'abc',
+      name: 'Test User',
+      email: 'test@example.com',
+      books: [
+        {
+          isbn: '123',
+          title: 'Book',
+          authors: [],
+          publisher: '',
+          publishedDate: '',
+          description: '',
+          coverUrl: '',
+          rating: 4,
+          reviews: []
+        }
+      ]
+    };
+    const isbn = comp.user.books[0].isbn;
+    comp.deleteBook(isbn);
+    tick();
+    expect(bookServiceSpy.deleteBook).toHaveBeenCalled();
+    expect(comp.addError).toBe('Löschen fehlgeschlagen');
   }));
 });

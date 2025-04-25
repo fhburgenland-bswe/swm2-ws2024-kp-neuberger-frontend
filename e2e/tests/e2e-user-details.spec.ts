@@ -82,7 +82,7 @@ test.describe('E2E: User Detail Page (/users/:id)', () => {
 
     await page.goto('http://localhost:4200/users/abc');
     await page.waitForSelector('.error');
-    await expect(page.locator('.error')).toHaveText('Benutzerdaten konnten nicht geladen werden.');
+    await expect(page.locator('.error').first()).toHaveText('Benutzerdaten konnten nicht geladen werden.');
   });
 
   test('navigates back to Home page via Home button', async ({ page }) => {

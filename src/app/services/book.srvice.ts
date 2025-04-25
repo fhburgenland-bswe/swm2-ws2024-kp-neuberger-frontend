@@ -44,4 +44,10 @@ export class BookService {
   private handleError(err: HttpErrorResponse) {
     return throwError(() => err);
   }
+
+  deleteBook(userId: string, isbn: string) {
+    return this.http.delete<void>(`${this.backendUrl}/users/${userId}/books/${isbn}`);
+  }
+
+
 }

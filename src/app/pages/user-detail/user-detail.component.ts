@@ -35,6 +35,7 @@ export class UserDetailComponent implements OnInit {
   successMsg: string | null = null;
   isbnForm!: FormGroup;
   addError: string | null = null;
+  deleteSuccess: string | null = null;
 
 
   /**
@@ -189,4 +190,28 @@ export class UserDetailComponent implements OnInit {
         }
       });
   }
+
+  deleteBook(bookIsbn: string): void {
+    if (!this.user) return;
+
+    const confirmed = confirm('Buch wirklich löschen?');
+    if (!confirmed) return;
+
+    const userId = this.user.id!;
+
+    this.bookService.deleteBook(userId, bookIsbn)
+      .subscribe({
+        next: () => {
+          this.user!.books = this.user!.books.filter(b => b.isbn !== bookIsbn);
+          this.deleteSuccess = 'Buch gelöscht';
+          this.addError = null; // vorherigen Fehler zurücksetzen
+          setTimeout(() => this.deleteSuccess = null, 3000);
+        },
+        error: () => {
+          this.addError = 'Löschen fehlgeschlagen';
+        }
+      });
+  }
+
+
 }
