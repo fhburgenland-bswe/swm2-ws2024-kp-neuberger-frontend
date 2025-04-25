@@ -61,36 +61,40 @@
       <div *ngIf="addError" class="error">{{ addError }}</div>
     </form>
   </section>
-
-    <section class="rating-filter" [formGroup]="ratingFilterForm">
-        <label for="ratingSelect"><h3>Bücher nach Bewertung filtern</h3></label>
-        <select id="ratingSelect" formControlName="ratingFilter" (change)="filterByRating()">
-            <option value="">Alle</option>
-            <option *ngFor="let r of [1,2,3,4,5]" [value]="r">{{ r }} Stern{{ r>1 ? 'e' : '' }}</option>
-        </select>
-    </section>
-
     <div *ngIf="filterLoading" class="spinner">
         Lade Bücher …
     </div>
-    <section class="search-books">
-        <h3>Bücher suchen</h3>
-        <form [formGroup]="searchForm" (ngSubmit)="searchBooks()">
-            <label> Titel:
-                <input formControlName="title" />
-            </label>
-            <label> Autor:
-                <input formControlName="author" />
-            </label>
-            <label> Jahr:
-                <input type="number" formControlName="year" />
-            </label>
-            <button type="submit"
-             [disabled]="ratingFilterForm.get('ratingFilter')?.value !== ''">
-              Suchen
-            </button>
-            <button type="button" (click)="resetSearch()">Zurücksetzen</button>
-        </form>
+
+    <section class="search-filter" [formGroup]="filterForm">
+        <h3>Bücher filtern & suchen</h3>
+
+        <label>
+            Titel:
+            <input formControlName="title" placeholder="Suchbegriff" />
+        </label>
+
+        <label>
+            Autor:
+            <input formControlName="author" />
+        </label>
+
+        <label>
+            Jahr:
+            <input type="number" formControlName="year" />
+        </label>
+
+        <label>
+            Bewertung:
+            <select formControlName="rating">
+                <option value="">Alle</option>
+                <option *ngFor="let r of [1,2,3,4,5]" [value]="r">
+                    {{r}} Stern{{r>1?'e':''}}
+                </option>
+            </select>
+        </label>
+
+        <button type="button" (click)="applyFilters()">Anwenden</button>
+        <button type="button" (click)="resetFilters()">Zurücksetzen</button>
     </section>
 
     <ng-container *ngIf="user.books.length; else noBooks">

@@ -45,6 +45,7 @@ export class UserDetailComponent implements OnInit {
   noBooksFound = false;
   ratingFilterForm!: FormGroup;
   filterLoading = false;
+  filterForm!: FormGroup;
 
   /**
    * @param userService Service zum Abrufen der Benutzerdaten vom Backend
@@ -85,9 +86,13 @@ export class UserDetailComponent implements OnInit {
           this.user = u;
           this.loading = false;
           this.originalBooks = u ? [...u.books] : [];
-          this.initSearchForm();
           this.initIsbnForm();
-          this.initRatingFilterForm();
+          this.filterForm = this.fb.group({
+            title:  [''],
+            author: [''],
+            year:   [null],
+            rating: ['']
+          });
         });
     });
   }
@@ -180,7 +185,6 @@ export class UserDetailComponent implements OnInit {
       this.addError = 'Dieses Buch ist bereits in Ihrer Liste.';
       return;
     }
-
     this.bookService.addBookByIsbn(userId, isbn)
       .pipe(
         catchError(err => {
@@ -294,17 +298,6 @@ export class UserDetailComponent implements OnInit {
   }
 
   /**
-   * Initialisiert das Formular zum Filtern nach Bewertung.
-   */
-  private initRatingFilterForm(): void {
-    this.ratingFilterForm = this.fb.group({
-      ratingFilter: ['']
-    });
-    this.noBooksFound = false;
-    this.filterLoading = false;
-  }
-
-  /**
    * Führt die Buchsuche anhand der aktuellen Formularwerte durch.
    * - Liest Filterkriterien (Titel, Autor, Jahr) aus `searchForm`.
    * - Ruft den `BookService.searchBooks` auf.
@@ -326,6 +319,61 @@ export class UserDetailComponent implements OnInit {
           this.user!.books = results;
           this.noBooksFound = results.length === 0;
         });
+  }
+
+  /**
+   * Wendet die Filter auf die Bücherliste des aktuellen Benutzers an.
+   *
+   * Diese Methode liest die Filterwerte (Titel, Autor, Jahr, Bewertung) aus dem Formular,
+   * führt eine Suche nach Büchern anhand der Filterwerte durch und aktualisiert die Bücherliste.
+   *
+   * Hinweis: Die Bewertung wird nicht direkt bei der Suche, sondern erst nachträglich gefiltert.
+   * Falls während der Suche ein Fehler auftritt, wird eine Fehlermeldung angezeigt.
+   *
+   * Wenn nach dem Anwenden der Filter keine Bücher gefunden werden, wird dies ebenfalls angezeigt.
+   */
+  applyFilters(): void {
+    if (!this.user) return;
+    this.errorMsg      = null;
+    this.noBooksFound  = false;
+    this.filterLoading = true;
+    const { title, author, year, rating } = this.filterForm.value;
+    const ratingNum = rating ? +rating : undefined;
+    this.bookService
+        .searchBooks(
+            this.user.id!,
+            title  || undefined,
+            author || undefined,
+            year   || undefined
+        )
+        .pipe(
+            finalize(() => this.filterLoading = false),
+            catchError(() => {
+              this.errorMsg = 'Fehler beim Anwenden der Filter';
+              return of([] as Book[]);
+            })
+        )
+        .subscribe(results => {
+          const finalList = ratingNum != null
+              ? results.filter(b => b.rating === ratingNum)
+              : results;
+
+          this.user!.books     = finalList;
+          this.noBooksFound    = finalList.length === 0;
+        });
+  }
+
+  /**
+   * Setzt alle angewendeten Filter zurück und stellt den ursprünglichen Zustand der Bücherliste wieder her.
+   *
+   * Dabei wird das Filterformular geleert und die ursprüngliche Bücherliste erneut geladen.
+   * Eventuell vorhandene Fehlermeldungen oder Hinweise über fehlende Ergebnisse werden ebenfalls zurückgesetzt.
+   */
+  resetFilters(): void {
+    this.filterForm.reset({ title:'', author:'', year:null, rating: '' });
+    this.user!.books  = [...this.originalBooks];
+    this.noBooksFound = false;
+    this.errorMsg     = null;
   }
 
   /**

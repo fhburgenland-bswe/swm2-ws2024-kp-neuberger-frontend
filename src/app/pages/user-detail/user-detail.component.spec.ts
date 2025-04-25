@@ -307,11 +307,10 @@ describe('UserDetailComponent', () => {
   it('should reset filters and restore original list', fakeAsync(() => {
     comp.user = { ...mockUser, books: [ /* evtl schon gefiltert */ ] };
     comp.originalBooks = [...mockUser.books];
-    comp.searchForm.reset({ title: 'X', author: 'Y', year: 2020 });
-
+    comp.initSearchForm();
+    comp.searchForm.setValue({ title: 'X', author: 'Y', year: 2020 });
     comp.resetSearch();
     tick();
-
     expect(comp.user!.books).toEqual(mockUser.books);
     expect(comp.searchForm.value).toEqual({ title: '', author: '', year: null });
     expect(comp.noBooksFound).toBeFalse();
@@ -344,5 +343,29 @@ describe('UserDetailComponent', () => {
     expect(bookServiceSpy.getBooks).toHaveBeenCalledWith('abc', 5);
     expect(comp.user!.books).toEqual([]);
     expect(comp.noBooksFound).toBeTrue();
+  }));
+
+  it('should search by text and then locally filter results by rating', fakeAsync(() => {
+    const fb = TestBed.inject(FormBuilder);
+    comp.user = { ...mockUser, books: [...mockUser.books] };
+    const serverResult: Book[] = [
+      { ...mockBook, isbn: 'a', rating: 2 },
+      { ...mockBook, isbn: 'b', rating: 4 },
+      { ...mockBook, isbn: 'c', rating: 4 }
+    ];
+    bookServiceSpy.searchBooks.and.returnValue(of(serverResult));
+    comp.filterForm = fb.group({
+      title:  ['Suchtext'],
+      author: ['X'],
+      year:   [2022],
+      rating: [4]
+    });
+    comp.applyFilters();
+    tick();
+    expect(bookServiceSpy.searchBooks).toHaveBeenCalledWith(
+        'abc', 'Suchtext', 'X', 2022
+    );
+    expect(comp.user!.books).toEqual([ serverResult[1], serverResult[2] ]);
+    expect(comp.noBooksFound).toBeFalse();
   }));
 });
